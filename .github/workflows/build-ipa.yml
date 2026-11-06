@@ -1,0 +1,52 @@
+name: Compila app iPad (.ipa)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installa XcodeGen
+        run: brew install xcodegen
+
+      - name: Crea il progetto Xcode
+        run: xcodegen generate
+
+      - name: Compila (senza firma: la firma la fa SideStore)
+        run: |
+          xcodebuild -project CentralinaLuci.xcodeproj -scheme CentralinaLuci \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Crea il file .ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/CentralinaLuci.app Payload/
+          zip -qry CentralinaLuci.ipa Payload
+          ls -la CentralinaLuci.ipa
+
+      - name: Salva il file
+        uses: actions/upload-artifact@v4
+        with:
+          name: CentralinaLuci-ipa
+          path: CentralinaLuci.ipa
+
+      - name: Pubblica come ultima versione
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Centralina Luci 1.0 (${{ github.run_number }})
+          body: "App per iPad da installare con SideStore. Scarica CentralinaLuci.ipa qui sotto."
+          files: CentralinaLuci.ipa
+          make_latest: true

@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Centralina Luci</title>
+<style>
+:root{
+  --bg:#0d0f14; --panel:#161a22; --panel2:#1d222c; --line:#2a303c; --txt:#e8ebf1; --sub:#8b93a3;
+  --acc:#ffb020; --red:#ff4d4d; --ok:#3ddc84; --blue:#4da3ff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;touch-action:manipulation}
+button:active{transform:scale(.97)}
+button.on{background:var(--acc);color:#111;border-color:var(--acc);font-weight:600}
+input,select{font:inherit;color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:34px;background:transparent;padding:0;border:0}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--txt);margin-top:-10px;border:3px solid var(--bg)}
+input[type=range]::-moz-range-track{height:8px;border-radius:4px;background:var(--line)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--txt);border:3px solid var(--bg)}
+
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:17px;margin:0 6px 0 0;white-space:nowrap}
+.pill{font-size:12px;padding:4px 10px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);color:var(--sub);white-space:nowrap}
+.pill.live{color:var(--ok);border-color:var(--ok)}
+.hgroup{display:flex;align-items:center;gap:8px}
+.master{display:flex;align-items:center;gap:8px;min-width:200px;flex:1}
+.master label{font-size:12px;color:var(--sub)}
+.bpm{font-variant-numeric:tabular-nums;min-width:62px;text-align:center;font-weight:600}
+#btnBlack.on{background:var(--red);border-color:var(--red);color:#fff}
+#btnFlash{background:#fff;color:#111;font-weight:700}
+
+nav{display:flex;gap:6px;padding:8px 14px 0}
+nav button{border-radius:10px 10px 0 0;border-bottom:none;padding:10px 20px}
+nav button.on{background:var(--panel);color:var(--txt);border-color:var(--line)}
+
+main{background:var(--panel);border-top:1px solid var(--line);min-height:calc(100vh - 120px)}
+section{display:none;padding:12px 14px}
+section.show{display:block}
+
+.stagewrap{background:#07080b;border:1px solid var(--line);border-radius:12px;overflow:hidden;position:relative}
+.stagewrap svg{display:block;width:100%;height:auto}
+#svgLive{max-height:44vh}
+#svgEdit{max-height:72vh;touch-action:none}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media (max-width:820px){.cols{grid-template-columns:1fr}}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.card h2 .sp{flex:1}
+.lab{font-size:12px;color:var(--sub);margin:10px 0 6px;text-transform:uppercase;letter-spacing:.04em}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{padding:9px 12px;font-size:14px}
+.sw{display:flex;flex-wrap:wrap;gap:20px 6px;padding-bottom:6px}
+.sw button{width:42px;height:42px;padding:0;border-radius:50%;border:3px solid transparent;position:relative}
+.sw button.on{border-color:#fff;outline:2px solid var(--acc)}
+.sw button span{position:absolute;inset:auto 0 -16px 0;font-size:9px;color:var(--sub)}
+.row{display:flex;align-items:center;gap:10px}
+.row .k{width:92px;font-size:13px;color:var(--sub)}
+.row input[type=range]{flex:1}
+.row .v{width:44px;text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:var(--sub)}
+.tog{min-width:64px}
+.fogrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#btnFog{padding:16px 22px;font-weight:700}
+#btnFog.on{background:#9fb4c8;color:#111}
+.hint{font-size:12.5px;color:var(--sub);margin:8px 0 0}
+
+.edittools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.edittools .sp{flex:1}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{color:var(--sub);font-weight:500;font-size:12px;text-transform:uppercase}
+td input{width:100%}
+td input.num{width:72px}
+.warn{color:var(--red);font-size:12px}
+.dmxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:3px;font-size:10px;font-variant-numeric:tabular-nums}
+.dmxgrid div{background:#0b0d12;border-radius:4px;padding:3px;text-align:center;color:var(--sub);position:relative;overflow:hidden}
+.dmxgrid div b{display:block;color:var(--txt);font-size:11px;position:relative}
+.dmxgrid div i{position:absolute;left:0;bottom:0;height:3px;background:var(--acc)}
+.calib{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:820px){.calib{grid-template-columns:1fr}}
+.xy{position:relative;width:100%;max-width:420px;aspect-ratio:1.5;background:#0b0d12;border:1px solid var(--line);border-radius:10px;touch-action:none;margin:8px 0;
+ background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:25% 25%}
+.xy .dot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;pointer-events:none}
+.xy .ax{position:absolute;font-size:10px;color:var(--sub)}
+.pointbox{border:1px dashed var(--acc);border-radius:10px;padding:10px;margin-top:10px}
+.arrows{display:grid;grid-template-columns:repeat(3,48px);gap:4px}
+.arrows button{padding:8px 0}
+.preset{position:relative;min-width:120px;padding:14px 18px;font-size:16px;font-weight:600}
+.preset.cur{outline:2px solid var(--acc)}
+.preset small{display:block;font-size:10px;color:var(--sub)}
+.preset .del{position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;line-height:24px;text-align:center;display:none}
+.editing .preset .del{display:block}
+
+.wheelbox{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.wheel{position:relative;width:230px;height:230px;border-radius:50%;touch-action:none;flex:none;
+ background:radial-gradient(closest-side,#fff 0%,rgba(255,255,255,.85) 12%,rgba(255,255,255,0) 100%),conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);
+ box-shadow:0 0 0 6px #0b0d12,0 0 0 7px var(--line)}
+.wheel .h{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#111;pointer-events:none}
+.wheel .h.act{width:42px;height:42px;margin:-21px 0 0 -21px;border-width:4px;outline:3px solid var(--acc)}
+.wside{display:flex;flex-direction:column;gap:10px;min-width:150px;flex:1}
+.slots{display:flex;gap:6px}
+.slots button{display:flex;align-items:center;gap:8px;padding:8px 10px;flex:1;justify-content:center}
+.slots button i{width:22px;height:22px;border-radius:50%;border:2px solid #fff;display:inline-block}
+.slots button.on{background:var(--panel);color:var(--txt);border-color:var(--acc);outline:2px solid var(--acc)}
+.quick{display:flex;flex-wrap:wrap;gap:6px}
+.quick button{padding:7px 10px;font-size:13px;display:flex;align-items:center;gap:6px}
+.quick button i{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid #666}
+</style>
+</head>
+<body>
+<header>
+  <h1>💡 Centralina Luci</h1>
+  <span id="status" class="pill">Simulazione</span>
+  <div class="master"><label>MASTER</label><input id="master" type="range" min="0" max="100" value="100"><span id="masterV" class="v" style="width:40px;font-size:13px;color:var(--sub)">100%</span></div>
+  <div class="hgroup">
+    <button id="bpmMinus">−</button><span class="bpm" id="bpmV">120 BPM</span><button id="bpmPlus">+</button>
+    <button id="btnTap">TAP</button>
+  </div>
+  <div class="hgroup">
+    <button id="btnFlash" title="Tutti i PAR bianchi al massimo finché tieni premuto">FLASH PAR</button>
+    <button id="btnBlack">BLACKOUT</button>
+  </div>
+</header>
+<nav>
+  <button data-tab="live" class="on">Live</button>
+  <button data-tab="palco">Palco</button>
+  <button data-tab="setup">Setup</button>
+</nav>
+<main>
+<!-- LIVE -->
+<section id="live" class="show">
+  <div class="card" id="cardPresets">
+    <h2>Preset <span class="sp"></span><button id="btnPresetEdit">Modifica</button><button id="btnPresetNew">+ Salva attuale</button></h2>
+    <div id="presetSave" hidden style="margin-bottom:10px">
+      <div class="row" style="flex-wrap:wrap">
+        <input id="presetName" placeholder="Nome (es. Ballad blu)" style="flex:1;min-width:180px">
+        <div class="chips" id="presetScope"><button data-v="tutto" class="on">PAR + teste</button><button data-v="par">Solo PAR</button><button data-v="heads">Solo teste</button></div>
+        <button id="presetOk" class="on">Salva</button><button id="presetCancel">Annulla</button>
+      </div>
+    </div>
+    <div class="chips" id="presetList"></div>
+    <p class="hint" id="presetEmpty">Nessun preset: imposta luci e movimenti, poi premi "+ Salva attuale".</p>
+  </div>
+  <div class="cols">
+    <div class="card" id="cardPar">
+      <h2>PAR <span class="sp"></span><button class="tog" data-tog="par.on">ON</button></h2>
+      <div class="lab">Gioco</div>
+      <div class="chips" data-chips="par.effect"></div>
+      <div class="lab">Colori</div>
+      <div class="wheelbox" data-wheel="par"></div>
+      <div class="row"><span class="k">Velocità</span><input type="range" min="0" max="100" data-range="par.speed"><span class="v"></span></div>
+      <div class="row"><span class="k">Intensità</span><input type="range" min="0" max="100" data-range="par.dim"><span class="v"></span></div>
+      <div class="row"><span class="k">Strobo</span><input type="range" min="0" max="100" data-range="par.strobe"><span class="v"></span></div>
+      <div class="row" style="margin-top:6px;flex-wrap:wrap">
+        <button class="tog" data-tog="par.sync">A tempo (BPM)</button>
+        <button class="tog" data-tog="par.smooth">Morbido</button>
+      </div>
+    </div>
+    <div class="card" id="cardHeads">
+      <h2>Teste mobili <span class="sp"></span><button class="tog" data-tog="heads.on">ON</button></h2>
+      <div class="row" style="flex-wrap:wrap">
+        <button id="btnPoint">🎯 Puntamento</button>
+        <button class="tog" data-tog="heads.home">⌂ Posizione iniziale</button>
+      </div>
+      <div class="pointbox" id="pointBox" hidden>
+        <div class="chips" id="pointWho"></div>
+        <div class="xy" id="xyPad"><span class="ax" style="left:6px;top:4px">tilt ↑</span><span class="ax" style="right:6px;bottom:4px">pan →</span></div>
+        <div class="row" style="flex-wrap:wrap;align-items:flex-start">
+          <div class="arrows"><span></span><button data-nud="0,1">▲</button><span></span><button data-nud="-1,0">◀</button><button id="btnFine" class="tog">fine</button><button data-nud="1,0">▶</button><span></span><button data-nud="0,-1">▼</button><span></span></div>
+          <div style="flex:1;min-width:180px">
+            <p class="hint" style="margin-top:0">Le teste si fermano in luce bianca. Trascina nel riquadro (o usa le frecce) per puntarle: quella diventa la <b>posizione iniziale</b>, cioè il centro dei movimenti. Con "Entrambe" e Specchio attivo la DX si muove a specchio.</p>
+            <button id="pointDone" class="on">Fatto</button>
+          </div>
+        </div>
+      </div>
+      <div class="lab">Movimento</div>
+      <div class="chips" data-chips="heads.move"></div>
+      <div class="row" style="margin-top:8px;flex-wrap:wrap">
+        <button class="tog" data-tog="heads.mirror">Specchio</button>
+      </div>
+      <div class="row"><span class="k">Sfasamento</span><input type="range" min="0" max="100" data-range="heads.phase"><span class="v"></span></div>
+      <div class="row"><span class="k">Ampiezza</span><input type="range" min="0" max="100" data-range="heads.size"><span class="v"></span></div>
+      <div class="row"><span class="k">Velocità mov.</span><input type="range" min="0" max="100" data-range="heads.speed"><span class="v"></span></div>
+      <div class="lab">Colore</div>
+      <div class="chips" data-chips="heads.colMode"></div>
+      <div class="row" style="margin-top:6px"><span class="k">Velocità colori</span><input type="range" min="0" max="100" data-range="heads.colSpeed"><span class="v"></span><button class="tog" data-tog="heads.sync">A tempo (BPM)</button></div>
+      <div class="wheelbox" data-wheel="heads" style="margin-top:8px"></div>
+      <div class="row"><span class="k">Intensità</span><input type="range" min="0" max="100" data-range="heads.dim"><span class="v"></span></div>
+      <div class="row"><span class="k">Zoom</span><input type="range" min="0" max="100" data-range="heads.zoom"><span class="v"></span></div>
+      <div class="row"><span class="k">Strobo</span><input type="range" min="0" max="100" data-range="heads.strobe"><span class="v"></span></div>
+      <div class="lab">Anello LED</div>
+      <div class="chips" data-chips="heads.ring"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h2>Macchina del fumo</h2>
+    <div class="fogrow">
+      <button id="btnFog">TIENI PREMUTO = FUMO</button>
+      <button id="btnFog5">Colpo 5 s</button>
+      <button class="tog" data-tog="fog.auto">Automatico</button>
+      <div class="row" style="flex:1;min-width:240px"><span class="k">Ogni</span><input type="range" min="15" max="300" step="5" data-range="fog.every"><span class="v"></span></div>
+      <div class="row" style="flex:1;min-width:240px"><span class="k">Durata</span><input type="range" min="1" max="15" data-range="fog.len"><span class="v"></span></div>
+    </div>
+    <p class="hint">Dopo l'accensione la macchina scalda per 6–8 minuti: prima non risponde ai comandi.</p>
+  </div>
+</section>
+
+<!-- PALCO -->
+<section id="palco">
+  <div class="edittools">
+    <span>Trascina luci, tralicci, stativi e batteria nella loro posizione reale.</span>
+    <span class="sp"></span>
+    <label class="row" style="gap:6px">Larghezza <input id="stW" type="number" min="3" max="20" step="0.5" style="width:70px"> m</label>
+    <label class="row" style="gap:6px">Profondità <input id="stD" type="number" min="2" max="15" step="0.5" style="width:70px"> m</label>
+    <button id="btnResetLayout">Disposizione iniziale</button>
+  </div>
+  <div class="row" style="flex-wrap:wrap;margin-bottom:10px"><span class="k" style="width:auto">Prova preset:</span><div class="chips" id="presetList2"></div></div>
+  <div class="stagewrap"><svg id="svgEdit"></svg></div>
+  <p class="hint">Il pubblico è in basso. L'ordine sinistra→destra dei PAR sul palco decide il verso dei giochi (chase, onda, lati).</p>
+</section>
+
+<!-- SETUP -->
+<section id="setup">
+  <div class="card">
+    <h2>Fari e indirizzi DMX <span class="sp"></span>
+      <button id="btnAdd" class="on">+ Aggiungi faro</button></h2>
+    <div id="addPanel" class="pointbox" hidden style="margin-bottom:12px">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap"><div class="chips" id="addTabs"><button data-t="lib" class="on">🔎 Cerca nella libreria</button><button data-t="mine">Modello già in uso</button><button data-t="paste">Incolla profilo</button></div><button id="addClose">Chiudi</button></div>
+      <div data-p="lib" style="margin-top:10px">
+        <div class="row"><input id="libQ" placeholder="Marca o modello, es. Slimpar 7, UKing ZQ02102, Chauvet" style="flex:1;min-width:0"><button id="libGo" class="on">Cerca</button></div>
+        <p class="hint">Libreria di QLC+ con circa 1.800 fari. Serve internet.</p>
+        <div class="chips" id="libRes"></div>
+        <div id="libModes" style="margin-top:8px"></div>
+      </div>
+      <div data-p="mine" hidden style="margin-top:10px"><select id="addMine" style="max-width:100%"></select></div>
+      <div data-p="paste" hidden style="margin-top:10px">
+        <textarea id="pasteTxt" rows="5" style="width:100%;font:13px monospace;color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px" placeholder="Incolla qui il profilo che ti ho preparato in chat (dalla foto del manuale)"></textarea>
+        <button id="pasteGo">Leggi profilo</button>
+      </div>
+      <div id="addMsg" class="hint"></div>
+      <div id="addPreview"></div>
+      <div class="row" style="flex-wrap:wrap;margin-top:10px;gap:12px">
+        <label class="row" style="gap:6px">Quanti <input id="addQty" type="number" min="1" max="24" value="1" style="width:64px"></label>
+        <label class="row" style="gap:6px">Nome <input id="addName" style="width:160px"></label>
+        <button id="addGo" class="on" disabled>Aggiungi al palco</button>
+      </div>
+    </div>
+    <table><thead><tr><th>Nome</th><th>Tipo</th><th>Indirizzo</th><th>Canali</th><th></th></tr></thead><tbody id="fixRows"></tbody></table>
+    <p class="hint">Tocca "Canali" su un faro per vedere a cosa serve ogni canale. Sugli U'King imposta la modalità <b>A001</b> (10 canali) e l'indirizzo indicato; sui Sagitter Slimpar modalità <b>10 canali</b>. Se un faro è di un altro modello, cambialo dalla colonna Tipo. Sulle teste: menu 2.Fixture → Dmx Mode <b>33CH</b>, Run Mode <b>DMX</b>. Sul fumo: menu A001 → indirizzo.</p>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h2>Teste mobili: posizione iniziale e inversione</h2>
+    <p class="hint" style="margin-top:0">Il puntamento rapido è nella scheda Live (🎯). Qui puoi rifinire i valori o invertire il pan di una testa montata al contrario.</p>
+    <div class="calib" id="calibBox"></div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h2>Rete Art-Net</h2>
+    <div class="row" style="flex-wrap:wrap;gap:14px">
+      <label class="row" style="gap:6px">IP del nodo <input id="netIp" style="width:150px"></label>
+      <label class="row" style="gap:6px">Universo <input id="netUni" type="number" min="0" max="15" style="width:70px"></label>
+    </div>
+    <p class="hint">Metti l'indirizzo IP del nodo. Se non lo conosci prova 2.255.255.255: manda il segnale a tutti i nodi della rete 2.x.x.x.</p>
+    <div id="centralBox" style="margin-top:10px"></div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h2 id="monTitle">Monitor DMX (canali 1–120)</h2>
+    <div class="dmxgrid" id="dmxGrid"></div>
+  </div>
+</section>
+</main>
+
+<script>
+"use strict";
+/*ENGINE-START*/
+/* ================= DATI ================= */
+// Profili: ogni canale ha un ruolo (dimmer, red, pan, strobe, fixed...). Il motore scrive i canali in base al ruolo.
+const C=(r,o)=>Object.assign({r},o||{});
+const RGBW=z=>["red","green","blue","white"].map(r=>C(r,{z}));
+const BUILTIN = [
+  {id:"par10", label:"U'King PAR 6-in-1 (10 can.)", group:"par", shape:"round", channels:[C("dimmer"),C("red"),C("green"),C("blue"),C("white"),C("amber"),C("uv"),C("strobe",{off:0,min:1,max:255}),C("fixed",{v:0,n:"Macro"}),C("fixed",{v:0,n:"Velocità macro"})]},
+  {id:"slim10", label:"Sagitter Slimpar 7 DL (10 can.)", group:"par", shape:"bar", channels:[C("dimmer"),C("red"),C("green"),C("blue"),C("white"),C("amber"),C("uv"),C("fixed",{v:0,n:"Funzione"}),C("fixed",{v:0,n:"Velocità"}),C("strobe",{off:0,min:10,max:255})]},
+  {id:"mh33", label:"Testa mobile Beam+Wash (33 can.)", group:"heads", channels:[C("pan"),C("panFine"),C("tilt"),C("tiltFine"),C("fixed",{v:0,n:"Velocità P/T"}),C("dimmer"),C("strobe",{off:255,min:4,max:103}),...RGBW(0),C("zoom"),C("fixed",{v:0,n:"Colori interni"}),C("fixed",{v:0,n:"Funzioni"}),C("ringDimmer"),C("fixed",{v:0,n:"Strobo anello"}),C("red",{z:"ring"}),C("green",{z:"ring"}),C("blue",{z:"ring"}),C("ringFx"),C("ringSpeed"),...RGBW(1),...RGBW(2),...RGBW(3)]},
+  {id:"fog1", label:"Macchina fumo 1500W", group:"fog", channels:[C("fog")]}
+];
+let TYPES = {}, profiles = [];
+function registerProfiles(user){ profiles=user||[]; TYPES={}; BUILTIN.concat(profiles).forEach(p=>{ TYPES[p.id]=Object.assign({},p,{ch:p.channels.length}); }); }
+registerProfiles([]);
+const grp=f=>(TYPES[f.type]||{}).group;
+// colori: canali r,g,b,w,a(ambra/giallo),uv ; css per il pallino
+const PALETTE = [
+  ["rosso",{r:255},"#ff2a2a"],["arancio",{r:255,g:60,a:160},"#ff7a1a"],["ambra",{a:255,r:60},"#ffb000"],
+  ["giallo",{r:255,g:190,a:120},"#ffe14d"],["verde",{g:255},"#22e05a"],["ciano",{g:210,b:255},"#22d8ff"],
+  ["blu",{b:255},"#2a5bff"],["viola",{r:110,b:255,uv:150},"#8a3dff"],["magenta",{r:255,b:210},"#ff2ad4"],
+  ["rosa",{r:255,g:50,b:110,w:40},"#ff6fa8"],["bianco",{w:255},"#ffffff"],["caldo",{w:150,a:200},"#ffd9a0"],
+  ["UV",{uv:255},"#6a2bd9"],["spento",{},"#000000"]
+];
+const PAL = Object.fromEntries(PALETTE.map(p=>[p[0],p[1]]));
+const PALCSS = Object.fromEntries(PALETTE.map(p=>[p[0],p[2]]));
+function hexRgb(h){ const n=parseInt(h.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+function colDef(v){ // "#rrggbb" dalla ruota oppure nome (bianco, caldo, ambra, UV, spento)
+  if(!v) return {};
+  if(v[0]==="#"){ const [r,g,b]=hexRgb(v); const w=Math.min(r,g,b); return {r:r-w,g:g-w,b:b-w,w}; }
+  return PAL[v]||{};
+}
+function colCss(v){ return !v?"transparent":v[0]==="#"?v:(PALCSS[v]||"#000"); }
+function hsvHex(h,s){ const c=hsv(h); const m=x=>Math.round(255-(255-x)*s); return "#"+[c.r,c.g,c.b].map(x=>m(x).toString(16).padStart(2,"0")).join(""); }
+function hexHS(hex){ let [r,g,b]=hexRgb(hex).map(x=>x/255); const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn; let h=0;
+  if(d){ if(mx===r) h=((g-b)/d)%6; else if(mx===g) h=(b-r)/d+2; else h=(r-g)/d+4; h/=6; if(h<0) h+=1; } return {h, s:mx?d/mx:0}; }
+const PAR_FX = [["statico","Fisso"],["alterna","Alterna"],["chase","Chase"],["pingpong","Ping-pong"],["lati","Lati SX/DX"],["onda","Onda"],["arcobaleno","Arcobaleno"],["respiro","Respiro"],["casuale","Casuale"],["strobo","Strobo"]];
+const HEAD_MV = [["fermo","Fermo"],["cerchio","Cerchio"],["otto","Otto"],["ventaglio","Ventaglio"],["onda","Su e giù"],["incrocio","Incrocio"],["quadrato","Quadrato"]];
+const HEAD_COL = [["fisso","Fisso A"],["alterna","Alterna A/B"],["zone","Zone A/B"],["arcobaleno","Arcobaleno"]];
+const RING = [["spento","Spento"],["uguale","Come il fascio"],["colB","Colore B"],["effetto","Effetti auto"]];
+
+function defaultFixtures(){
+  return [
+    {id:"p1",type:"par10", name:"PAR SX 1",addr:1, x:0.45,y:3.0},
+    {id:"p2",type:"slim10",name:"PAR SX 2",addr:11,x:0.85,y:3.0},
+    {id:"p3",type:"par10", name:"PAR SX 3",addr:21,x:1.25,y:3.0},
+    {id:"p4",type:"par10", name:"PAR DX 1",addr:31,x:6.75,y:3.0},
+    {id:"p5",type:"slim10",name:"PAR DX 2",addr:41,x:7.15,y:3.0},
+    {id:"p6",type:"par10", name:"PAR DX 3",addr:51,x:7.55,y:3.0},
+    {id:"m1",type:"mh33",name:"Testa SX",addr:81, x:2.6,y:1.1,homePan:128,homeTilt:100,invPan:false},
+    {id:"m2",type:"mh33",name:"Testa DX",addr:121,x:5.4,y:1.1,homePan:128,homeTilt:100,invPan:false},
+    {id:"f1",type:"fog1",name:"Fumo",addr:161,x:4.0,y:0.35}
+  ];
+}
+function defaultDecor(){
+  return [
+    {id:"d1",kind:"batteria",x:4.0,y:1.3},
+    {id:"t1",kind:"traliccio",x:2.6,y:1.1},{id:"t2",kind:"traliccio",x:5.4,y:1.1},
+    {id:"s1",kind:"stativo",x:0.85,y:3.0},{id:"s2",kind:"stativo",x:7.15,y:3.0}
+  ];
+}
+function defaultState(){
+  return {
+    master:100, blackout:false, bpm:120,
+    par:{on:true,effect:"chase",colA:"#ff0000",colB:"#0000ff",colC:"",speed:45,dim:100,strobe:0,sync:false,smooth:true},
+    heads:{on:true,home:false,colSpeed:40,move:"cerchio",mirror:true,phase:0,sync:false,size:45,speed:30,colMode:"fisso",colA:"bianco",colB:"#0000ff",dim:100,zoom:30,strobe:0,ring:"uguale"},
+    fog:{auto:false,every:60,len:4}
+  };
+}
+
+/* ================= STATO + SALVATAGGIO ================= */
+const KEY="centralinaLuci_v3";
+let fixtures, decor, stage, S, net, presets, curPreset=null, point=false;
+function load(){
+  let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
+  if(window.__LUCI_DATA && window.__LUCI_DATA.fixtures) d=window.__LUCI_DATA; // salvataggio dell'app iPad
+  if(!d){ // versioni precedenti: tiene posizioni, nomi, puntamento, preset; aggiorna tipi e indirizzi
+    let o=null; for(const k of ["centralinaLuci_v2","centralinaLuci_v1"]){ try{ o=JSON.parse(localStorage.getItem(k)); }catch(e){} if(o) break; }
+    if(o){ const fx=defaultFixtures(); (o.fixtures||[]).forEach(of=>{ const f=fx.find(x=>x.id===of.id); if(f){ f.x=of.x; f.y=of.y; if(f.type==="mh33"){ f.homePan=of.homePan; f.homeTilt=of.homeTilt; f.invPan=of.invPan; } } });
+      d={fixtures:fx,decor:o.decor,stage:o.stage,net:o.net,state:o.state,presets:o.presets}; }
+  }
+  fixtures = d&&d.fixtures || defaultFixtures();
+  decor = d&&d.decor || defaultDecor();
+  stage = d&&d.stage || {w:8,d:5};
+  net = d&&d.net || {ip:"2.0.0.10",uni:0};
+  presets = d&&d.presets || [];
+  registerProfiles(d&&d.profiles || []);
+  S = Object.assign(defaultState(), d&&d.state||{});
+  const def=defaultState();
+  S.par=Object.assign(def.par,S.par); S.heads=Object.assign(def.heads,S.heads); S.fog=Object.assign(def.fog,S.fog);
+  delete S.heads.offset; delete S.calib;
+  S.blackout=false;
+}
+let saveT=null;
+function save(){ if(typeof syncSoon==='function') syncSoon(); clearTimeout(saveT); saveT=setTimeout(()=>{ const js=JSON.stringify({fixtures,decor,stage,net,state:S,presets,profiles}); try{ localStorage.setItem(KEY,js); }catch(e){} if(typeof NATIVE!=='undefined'&&NATIVE) nativePost({cmd:"save",json:js}); },300); }
+function getP(path){ return path.split(".").reduce((o,k)=>o[k],S); }
+function setP(path,val){ if(/^(par|heads)\./.test(path)) curPreset=null; const ks=path.split("."); const last=ks.pop(); ks.reduce((o,k)=>o[k],S)[last]=val; save(); }
+
+/* ================= MOTORE ================= */
+const dmx = new Uint8Array(512);
+const vis = {}; // stato visivo per faro
+let tStart=performance.now(), fogUntil=0, fogHold=false, flash=false, lastFogAuto=0, fogOnNow=false;
+const clamp=(v,a=0,b=255)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,k)=>a+(b-a)*k;
+function mixCol(c1,c2,k){ const o={}; for(const ch of ["r","g","b","w","a","uv"]) o[ch]=lerp(c1[ch]||0,c2[ch]||0,k); return o; }
+function hsv(h){ const i=Math.floor(h*6), f=h*6-i, q=1-f; const m=[[1,f,0],[q,1,0],[0,1,f],[0,q,1],[f,0,1],[1,0,q]][i%6]; return {r:m[0]*255,g:m[1]*255,b:m[2]*255}; }
+function rnd(n){ const x=Math.sin(n*127.1+311.7)*43758.5453; return x-Math.floor(x); }
+function stepDur(speed,sync,mult){ if(sync) return 60/S.bpm*(mult||1); return 2.2*Math.pow(0.08/2.2, speed/100); }
+function isPar(f){ return grp(f)==="par"; }
+function parsSorted(){ return fixtures.filter(f=>isPar(f)).slice().sort((a,b)=>a.x-b.x||a.y-b.y); }
+
+function parCols(){ const c=[colDef(S.par.colA),colDef(S.par.colB)]; if(S.par.colC) c.push(colDef(S.par.colC)); return c; }
+function parColorAt(i,n,step,phase,f,C){
+  const k=C.length, A=C[0], B=C[1];
+  const mod=(x,m)=>((x%m)+m)%m;
+  switch(S.par.effect){
+    case "statico": return A;
+    case "alterna": return C[mod(i+step,k)];
+    case "chase": { const lap=Math.floor(step/n); const run=k>2?(lap%2?C[2]:A):A; return mod(step,n)===i?run:B; }
+    case "pingpong": { const L=Math.max(1,2*n-2); let p=mod(step,L); const lap=Math.floor(step/L); if(p>=n) p=L-p; const run=k>2?(lap%2?C[2]:A):A; return p===i?run:B; }
+    case "lati": { const left=f.x<stage.w/2; return C[mod(step+(left?0:1),k)]; }
+    case "casuale": { if(k>2) return C[Math.floor(rnd(step*31+i)*k)]; const pick=Math.floor(rnd(step)*n); return pick===i?A:B; }
+    default: return A;
+  }
+}
+function cycleMix(C,x){ const k=C.length; const p=((x%k)+k)%k, j=Math.floor(p); return mixCol(C[j],C[(j+1)%k],p-j); }
+function computePars(t){
+  const list=parsSorted(), n=list.length; if(!n) return;
+  const sd=stepDur(S.par.speed,S.par.sync,1), phase=t/sd, step=Math.floor(phase), frac=phase-step;
+  const C=parCols(), A=C[0], B=C[1];
+  list.forEach((f,i)=>{
+    let c, dim=1;
+    const fx=S.par.effect;
+    if(fx==="arcobaleno"){ c=hsv(((phase*0.12)+i/n)%1); }
+    else if(fx==="onda"){ c=C.length>2? cycleMix(C,phase*0.25*C.length/2 - i/n*C.length) : mixCol(A,B,0.5+0.5*Math.sin(2*Math.PI*(phase*0.25-i/n))); }
+    else if(fx==="respiro"){ const br=Math.floor(phase*0.5); c=C[br%C.length]; dim=0.5-0.5*Math.cos(2*Math.PI*phase*0.5); }
+    else if(fx==="strobo"){ const fl=Math.floor(phase*2); c=C.length>2?C[fl%C.length]:A; dim=((phase*2)%1)<0.35?1:0; }
+    else {
+      c=parColorAt(i,n,step,phase,f,C);
+      if(S.par.smooth && fx!=="statico"){ const prev=parColorAt(i,n,step-1,phase,f,C); c=mixCol(prev,c,Math.min(1,frac/0.45)); }
+    }
+    if(flash){ c={r:255,g:255,b:255,w:255}; dim=1; }
+    let master=(S.master/100)*(S.blackout?0:1);
+    let d=(S.par.on||flash)?dim*(flash?1:S.par.dim/100)*master:0;
+    if(flash) d=S.blackout?0:1;
+    const st=(S.par.strobe>0&&!flash)?S.par.strobe:0;
+    writeFixture(f,{dim:d, main:c, strobe:st},t);
+    let vl=d; if(st){ vl*=((t*(1.5+S.par.strobe/7)+i*0.13)%1)<0.3?1:0; }
+    vis[f.id]={rgb:toRgb(c), lvl:vl};
+  });
+}
+function toRgb(c){
+  const r=(c.r||0)+(c.a||0)+(c.uv||0)*0.35+(c.w||0), g=(c.g||0)+(c.a||0)*0.6+(c.w||0), b=(c.b||0)+(c.uv||0)*0.9+(c.w||0)*0.9;
+  const m=Math.max(r,g,b,1), s=m>255?255/m:1;
+  return [Math.round(r*s),Math.round(g*s),Math.round(b*s)];
+}
+const CK={red:"r",green:"g",blue:"b",white:"w",amber:"a",uv:"uv"};
+function capsOf(P){ if(!P._caps){ const k={}; P.channels.forEach(c=>{ if(c.z===undefined||c.z===0) k[c.r]=1; }); P._caps=k; } return P._caps; }
+function fold(c,k){ // adatta il colore ai LED che il faro ha davvero
+  let r=c.r||0,g=c.g||0,b=c.b||0,w=c.w||0,a=c.a||0,u=c.uv||0;
+  if(!k.uv){ r+=u*0.35; b+=u*0.85; u=0; }
+  if(!k.amber){ r+=a*0.95; g+=a*0.5; a=0; }
+  if(!k.white){ r+=w; g+=w; b+=w; w=0; }
+  return {r:clamp(r),g:clamp(g),b:clamp(b),w:clamp(w),a:clamp(a),uv:clamp(u)};
+}
+function writeFixture(f,L,t){
+  const P=TYPES[f.type]; if(!P) return; const k=capsOf(P), a=f.addr-1;
+  let dim=L.dim||0, cm=1;
+  if((L.strobe||0)>0 && !k.strobe){ const on=((t*(1.5+L.strobe/7))%1)<0.3; dim*=on?1:0; }
+  if(!k.dimmer) cm=dim;
+  const cache={};
+  const colz=z=>{ const key=(z===undefined?0:z); if(key in cache) return cache[key];
+    const c= key==="ring" ? L.ring : (key>0 && L.zones ? L.zones[(key-1)%L.zones.length] : L.main);
+    return cache[key]= c ? fold(c,k) : null; };
+  P.channels.forEach((c,i)=>{ let v=0;
+    switch(c.r){
+      case "dimmer": v=dim*255; break;
+      case "red": case "green": case "blue": case "white": case "amber": case "uv": { const cc=colz(c.z); v=cc?cc[CK[c.r]]*(c.z==="ring"?1:cm):0; break; }
+      case "strobe": v=(L.strobe||0)>0 ? c.min+(L.strobe/100)*(c.max-c.min) : c.off; break;
+      case "pan": v=Math.floor(L.pan||0); break;
+      case "panFine": v=Math.floor(((L.pan||0)%1)*256); break;
+      case "tilt": v=Math.floor(L.tilt||0); break;
+      case "tiltFine": v=Math.floor(((L.tilt||0)%1)*256); break;
+      case "zoom": v=(L.zoom||0)*255; break;
+      case "zoomInv": v=255-(L.zoom||0)*255; break;
+      case "ringDimmer": v=(L.ringDim||0)*255; break;
+      case "ringFx": v=L.ringFx||0; break;
+      case "ringSpeed": v=L.ringFx?160:0; break;
+      case "fog": v=L.fog?255:0; break;
+      case "fixed": v=c.v||0; break;
+    }
+    dmx[a+i]=clamp(Math.round(v));
+  });
+}
+function headRGBW(c){ return {r:clamp((c.r||0)+(c.a||0)*0.95+(c.uv||0)*0.35), g:clamp((c.g||0)+(c.a||0)*0.5), b:clamp((c.b||0)+(c.uv||0)*0.85), w:clamp(c.w||0)}; }
+function headList(){ return fixtures.filter(f=>grp(f)==="heads").slice().sort((a,b)=>a.x-b.x); }
+let limPrev=null; // prova limite tilt: {id, v}
+function computeHeads(t){
+  const heads=headList();
+  const H=S.heads, cyc=stepDur(H.speed,false,1)*4; // movimento sempre libero dal BPM
+  const sdCol=stepDur(H.colSpeed,H.sync,1), stepC=Math.floor(t/sdCol);
+  const A=colDef(H.colA), B=colDef(H.colB);
+  heads.forEach((f,k)=>{
+    let th=2*Math.PI*t/cyc + k*(H.phase/100)*2*Math.PI;
+    const ap=H.size/100*110, at=H.size/100*45;
+    let dp=0,dt=0;
+    switch(H.move){
+      case "cerchio": dp=ap*Math.cos(th); dt=at*Math.sin(th); break;
+      case "otto": dp=ap*Math.sin(th); dt=at*Math.sin(2*th); break;
+      case "ventaglio": dp=ap*Math.sin(th); break;
+      case "onda": dt=at*Math.sin(th); break;
+      case "incrocio": dp=ap*Math.sin(th); dt=at*0.3*Math.sin(2*th); break;
+      case "quadrato": { const p=((th/(2*Math.PI))%1+1)%1*4, s=Math.floor(p), q=p-s; const pts=[[-1,-1],[1,-1],[1,1],[-1,1],[-1,-1]]; dp=ap*lerp(pts[s][0],pts[s+1][0],q); dt=at*lerp(pts[s][1],pts[s+1][1],q); break; }
+    }
+    const mirror=H.mirror || H.move==="incrocio";
+    if(mirror && k%2===1) dp=-dp;
+    const prev=!!(limPrev&&limPrev.id===f.id);
+    if(point || H.home || prev){ dp=0; dt=0; }
+    let c, zones=null;
+    if(point || prev) c={w:255};
+    else if(H.colMode==="alterna") c=((stepC+k)%2===0)?A:B;
+    else if(H.colMode==="zone"){ c=A; zones=[0,1,2].map(z=>((z+stepC+k)%2===0)?A:B); }
+    else if(H.colMode==="arcobaleno") c=hsv(((t/(sdCol*8))+k*0.5)%1);
+    else c=A;
+    const master=(S.master/100)*(S.blackout?0:1);
+    let d=(point||prev)?1:(H.on?H.dim/100:0); d*=master;
+    const sign=f.invPan?-1:1;
+    const tA=f.tiltMin??0, tB=f.tiltMax??255, tLo=Math.max(0,Math.min(tA,tB)), tHi=Math.min(255.99,Math.max(tA,tB));
+    const tiltRaw=prev?limPrev.v:f.homeTilt+dt/195*256;
+    const panF=Math.max(0,Math.min(255.99,f.homePan+sign*dp/540*256)), tiltF=Math.max(tLo,Math.min(tHi,tiltRaw));
+    const strobeOn=H.strobe>0&&!point;
+    let rc=null, reff=0;
+    if(point) rc=null; else if(H.ring==="uguale") rc=c; else if(H.ring==="colB") rc=B; else if(H.ring==="effetto"){ rc={r:255,g:255,b:255}; reff=60; }
+    const rd=rc?d:0;
+    writeFixture(f,{dim:d, main:zones?{}:c, zones, ring:rc, ringDim:rd, ringFx:reff, pan:panF, tilt:tiltF, zoom:H.zoom/100, strobe:strobeOn?H.strobe:0},t);
+    let vlvl=d; if(strobeOn){ vlvl*= ((t*(2+H.strobe/10))%1)<0.3?1:0; }
+    vis[f.id]={rgb:toRgb(c), lvl:vlvl, pan:sign*dp, tilt:(tiltF-f.homeTilt)*195/256, zoom:H.zoom/100, ring:rc?toRgb(rc):null, ringLvl:rd, homePan:f.homePan, homeTilt:f.homeTilt, sign};
+  });
+}
+function computeFog(t){
+  const now=performance.now();
+  if(S.fog.auto){ if(now-lastFogAuto>S.fog.every*1000){ lastFogAuto=now; fogUntil=Math.max(fogUntil,now+S.fog.len*1000); } }
+  const on=fogHold||now<fogUntil;
+  fixtures.filter(f=>grp(f)==="fog").forEach(f=>{ writeFixture(f,{fog:on,dim:on?1:0,main:on?{w:255}:{}},t); vis[f.id]={on}; });
+  fogOnNow=on;
+}
+/*ENGINE-END*/
+function tick(){
+  const t=(performance.now()-tStart)/1000;
+  dmx.fill(0);
+  computePars(t); computeHeads(t); computeFog(t);
+  document.getElementById("btnFog").classList.toggle("on",fogOnNow);
+  if(NATIVE) sendNative();
+  drawLive(); if(curTab==="palco") drawEdit(); if(curTab==="setup") drawMonitor();
+  requestAnimationFrame(tick);
+}
+
+/* ================= APP IPAD (SideStore) ================= */
+// Dentro l'app per iPad l'Art-Net parte direttamente dall'iPad: la pagina passa i valori DMX all'app.
+const NATIVE=!!(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.luci);
+function nativePost(o){ try{ window.webkit.messageHandlers.luci.postMessage(o); }catch(e){} }
+let lastNative=0;
+function sendNative(){
+  const now=performance.now(); if(now-lastNative<25) return; lastNative=now;
+  let bin=""; for(let i=0;i<512;i++) bin+=String.fromCharCode(dmx[i]);
+  nativePost({cmd:"dmx", ip:String(net.ip||""), uni:net.uni|0, b64:btoa(bin)});
+}
+const nativeWait={}; let nativeId=0;
+window.__luciFetchDone=(id,ok,text)=>{ const w=nativeWait[id]; if(!w) return; delete nativeWait[id]; ok?w.res(text):w.rej(new Error(text||"rete non raggiungibile")); };
+function fetchText(url){
+  if(NATIVE) return new Promise((res,rej)=>{ const id=++nativeId; nativeWait[id]={res,rej}; nativePost({cmd:"fetch",id,url}); setTimeout(()=>{ if(nativeWait[id]){ delete nativeWait[id]; rej(new Error("tempo scaduto")); } },20000); });
+  return fetch(url).then(r=>{ if(!r.ok) throw new Error("errore "+r.status); return r.text(); });
+}
+let libIndex=null;
+async function libSearch(q){ if(!libIndex) libIndex=LIB.parseIndex(await fetchText(LIB.BASE+"FixturesMap.xml")); return {results:LIB.search(libIndex,q)}; }
+async function libGet(man,file){ return LIB.parseQxf(await fetchText(LIB.url(man,file))); }
+
+/* ================= COLLEGAMENTO CENTRALINA ================= */
+// Quando l'app è aperta dalla centralina (Raspberry o computer) gli effetti li calcola la centralina,
+// che manda l'Art-Net al nodo. L'app manda le modifiche e riceve quelle fatte da altri dispositivi.
+let ws=null, applying=false, syncT=null, central=null;
+function connect(){
+  const h=location.hostname||"";
+  if(!/^https?:$/.test(location.protocol) || /claude|anthropic|usercontent/.test(h) || !h) return;
+  try{
+    ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");
+    ws.onopen=()=>{ setStatus(true); };
+    ws.onclose=()=>{ setStatus(false); central=null; renderCentral(); setTimeout(connect,2000); };
+    ws.onerror=()=>{};
+    ws.onmessage=e=>{ let m; try{ m=JSON.parse(e.data); }catch(x){ return; }
+      if(m.type==="need") sendNow();
+      else if(m.type==="state") applyRemote(m.data);
+      else if(m.type==="info"){ central=m; renderCentral(); }
+    };
+  }catch(e){}
+}
+function snapshot(){ return {fixtures,decor,stage,net,state:S,presets,profiles}; }
+function sendNow(){ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:"state",data:snapshot()})); }
+function syncSoon(){ if(applying||!ws||ws.readyState!==1) return; clearTimeout(syncT); syncT=setTimeout(sendNow,40); }
+function sendMsg(m){ if(ws&&ws.readyState===1) ws.send(JSON.stringify(m)); }
+function applyRemote(d){
+  applying=true;
+  registerProfiles(d.profiles||[]); fixtures=d.fixtures; decor=d.decor; stage=d.stage; net=d.net; presets=d.presets||[];
+  const def=defaultState(); S=Object.assign(def,d.state||{}); S.par=Object.assign(defaultState().par,S.par); S.heads=Object.assign(defaultState().heads,S.heads); S.fog=Object.assign(defaultState().fog,S.fog);
+  try{ localStorage.setItem(KEY,JSON.stringify(snapshot())); }catch(e){}
+  rebuildStages(); refreshUI(); if(curTab==="setup") renderSetup();
+  const ip=document.getElementById("netIp"), un=document.getElementById("netUni"); if(ip){ ip.value=net.ip; un.value=net.uni; }
+  applying=false;
+}
+function setStatus(live){ const el=document.getElementById("status"); el.textContent=live?"Centralina collegata":"Simulazione"; el.classList.toggle("live",live); }
+let shutArm=false;
+function renderCentral(){
+  const box=document.getElementById("centralBox"); if(!box) return;
+  if(NATIVE){ box.innerHTML=`<p class="hint" style="margin:0">App iPad: l'Art-Net parte direttamente da questo iPad verso <b>${escH(net.ip)}</b> (universo ${net.uni}). Qui serve l'indirizzo IP esatto del nodo: 2.255.255.255 non funziona. L'iPad deve essere collegato al Wi-Fi del router a cui è collegato il nodo, e l'app deve restare aperta.</p>`; return; }
+  if(!central){ box.innerHTML='<p class="hint" style="margin:0">Anteprima: le luci sono solo simulate. Quando apri l\'app dalla centralina qui vedi lo stato del collegamento.</p>'; return; }
+  box.innerHTML=`<p class="hint" style="margin:0 0 8px">Centralina: <b>${central.host}</b> · Art-Net verso <b>${net.ip}</b> (universo ${net.uni}) · ${central.clients} dispositivi collegati</p>`+
+    (central.canShutdown?`<button id="btnShut" class="${shutArm?"on":""}" style="${shutArm?"background:var(--red);border-color:var(--red);color:#fff":""}">${shutArm?"Tocca di nuovo per spegnere":"⏻ Spegni centralina"}</button> <span class="hint">Aspetta 15 secondi, poi spegni l'interruttore.</span>`:"");
+  const b=document.getElementById("btnShut");
+  if(b) b.onclick=()=>{ if(!shutArm){ shutArm=true; renderCentral(); setTimeout(()=>{ shutArm=false; renderCentral(); },4000); } else { sendMsg({type:"shutdown"}); b.textContent="Spegnimento in corso…"; } };
+}
+
+/* ================= DISEGNO PALCO ================= */
+const NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(parent) parent.appendChild(e); return e; }
+const rgbS=(c,a=1)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
+function buildStage(svg,editable){
+  svg.innerHTML="";
+  const W=stage.w, D=stage.d, M=0.6;
+  svg.setAttribute("viewBox",`${-M} ${-M} ${W+2*M} ${D+M+0.9}`);
+  const defs=el("defs",{},svg);
+  const flt=el("filter",{id:svg.id+"blur",x:"-100%",y:"-100%",width:"300%",height:"300%"},defs); el("feGaussianBlur",{stdDeviation:"0.12"},flt);
+  const fb=el("filter",{id:svg.id+"beam",x:"-50%",y:"-50%",width:"200%",height:"200%"},defs); el("feGaussianBlur",{stdDeviation:"0.05"},fb);
+  el("rect",{x:0,y:0,width:W,height:D,rx:0.08,fill:"#14171e",stroke:"#2f3644","stroke-width":0.03},svg);
+  const grid=el("g",{stroke:"#1f2430","stroke-width":0.012},svg);
+  for(let x=1;x<W;x++) el("line",{x1:x,y1:0,x2:x,y2:D},grid);
+  for(let y=1;y<D;y++) el("line",{x1:0,y1:y,x2:W,y2:y},grid);
+  const lab=(x,y,txt,size,fill,anchor)=>{ const tx=el("text",{x,y,"font-size":size||0.2,fill:fill||"#8b93a3","text-anchor":anchor||"middle","font-family":"-apple-system,sans-serif"},svg); tx.textContent=txt; return tx; };
+  lab(W/2,-0.22,"FONDO PALCO",0.18);
+  lab(W/2,D+0.55,"▼  PUBBLICO  ▼",0.24,"#c9ced8");
+  if(editable){ lab(W+0.3,D/2,`${D} m`,0.18,"#8b93a3","middle").setAttribute("transform",`rotate(90 ${W+0.3} ${D/2})`); lab(W/2,D+0.25,`${W} m`,0.18); }
+  const beams=el("g",{},svg), layer=el("g",{},svg);
+  svg._beams=beams; svg._items={};
+  // decor
+  decor.forEach(d=>{
+    const g=el("g",{"data-id":d.id,class:"item"},layer);
+    if(d.kind==="batteria"){
+      el("circle",{cx:0,cy:0,r:0.38,fill:"#2a2f3a",stroke:"#4a5263","stroke-width":0.03},g);
+      el("circle",{cx:-0.3,cy:0.28,r:0.16,fill:"#323846",stroke:"#5a6274","stroke-width":0.02},g);
+      el("circle",{cx:0.3,cy:0.28,r:0.16,fill:"#323846",stroke:"#5a6274","stroke-width":0.02},g);
+      el("circle",{cx:-0.45,cy:-0.25,r:0.13,fill:"#3a3a2a",stroke:"#8a8a50","stroke-width":0.02},g);
+      el("circle",{cx:0.45,cy:-0.25,r:0.13,fill:"#3a3a2a",stroke:"#8a8a50","stroke-width":0.02},g);
+      const t=el("text",{x:0,y:0.07,"font-size":0.16,fill:"#aab","text-anchor":"middle"},g); t.textContent="batteria";
+    }else if(d.kind==="traliccio"){
+      el("rect",{x:-0.2,y:-0.2,width:0.4,height:0.4,fill:"none",stroke:"#9aa3b5","stroke-width":0.03},g);
+      el("path",{d:"M-0.2 -0.2 L0.2 0.2 M0.2 -0.2 L-0.2 0.2",stroke:"#6d7586","stroke-width":0.02},g);
+      const t=el("text",{x:0,y:0.4,"font-size":0.13,fill:"#8b93a3","text-anchor":"middle"},g); t.textContent="traliccio 1,2 m"; t.setAttribute("y","0.55");
+    }else if(d.kind==="stativo"){
+      el("line",{x1:-0.5,y1:0,x2:0.5,y2:0,stroke:"#6d7586","stroke-width":0.05,"stroke-linecap":"round"},g);
+      el("circle",{cx:0,cy:0,r:0.08,fill:"#6d7586"},g);
+      const t=el("text",{x:0,y:-0.22,"font-size":0.1,fill:"#8b93a3","text-anchor":"middle"},g); t.textContent="stativo";
+    }
+    g.setAttribute("transform",`translate(${d.x} ${d.y})`);
+    svg._items[d.id]={g,obj:d};
+  });
+  // fixtures
+  fixtures.forEach(f=>{
+    const g=el("g",{"data-id":f.id,class:"item"},layer);
+    const it={g,obj:f};
+    if(isPar(f)){
+      it.glow=el("circle",{cx:0,cy:0,r:0.32,fill:"#000",opacity:0,filter:`url(#${svg.id}blur)`},g);
+      it.body=(TYPES[f.type]||{}).shape==="bar"?el("rect",{x:-0.17,y:-0.07,width:0.34,height:0.14,rx:0.03,fill:"#222",stroke:"#555","stroke-width":0.025},g):el("circle",{cx:0,cy:0,r:0.13,fill:"#222",stroke:"#555","stroke-width":0.025},g);
+    }else if(grp(f)==="heads"){
+      it.beam=el("path",{d:"",fill:"#fff",opacity:0,filter:`url(#${svg.id}beam)`},beams);
+      it.ring=el("circle",{cx:0,cy:0,r:0.2,fill:"none",stroke:"#000","stroke-width":0.05,opacity:0},g);
+      it.body=el("rect",{x:-0.14,y:-0.14,width:0.28,height:0.28,rx:0.05,fill:"#222",stroke:"#666","stroke-width":0.025},g);
+      it.lens=el("circle",{cx:0,cy:0,r:0.08,fill:"#000"},g);
+    }else if(grp(f)==="fog"){
+      it.cloud=el("g",{opacity:0},g);
+      [[0,0.45,0.35],[-0.35,0.7,0.3],[0.35,0.7,0.3],[0,0.95,0.38]].forEach(c=>el("circle",{cx:c[0],cy:c[1],r:c[2],fill:"#c8d2dc",filter:`url(#${svg.id}blur)`},it.cloud));
+      it.body=el("rect",{x:-0.28,y:-0.14,width:0.56,height:0.28,rx:0.04,fill:"#2a2f3a",stroke:"#7a8396","stroke-width":0.025},g);
+    }
+    const short=grp(f)==="fog"?"fumo":isPar(f)?f.name.replace(/^PAR\s*/i,"").replace(/\s+/g,""):f.name;
+    const ny=isPar(f)?0.3:grp(f)==="heads"?-0.42:-0.22, ay=isPar(f)?0.42:grp(f)==="heads"?-0.3:0.3;
+    const nm=el("text",{x:0,y:ny,"font-size":isPar(f)?0.11:0.13,fill:"#c9ced8","text-anchor":"middle"},g);
+    nm.textContent=short;
+    if(editable){ const ad=el("text",{x:0,y:ay,"font-size":0.09,fill:"#8b93a3","text-anchor":"middle"},g); ad.textContent="DMX "+f.addr; }
+    g.setAttribute("transform",`translate(${f.x} ${f.y})`);
+    svg._items[f.id]=it;
+  });
+  if(editable) enableDrag(svg);
+}
+function paint(svg){
+  if(!svg._items) return;
+  fixtures.forEach(f=>{
+    const it=svg._items[f.id], v=vis[f.id]; if(!it||!v) return;
+    if(isPar(f)){
+      const l=v.lvl, c=v.rgb, on=l>0.02&&(c[0]+c[1]+c[2])>10;
+      it.body.setAttribute("fill",on?rgbS(c,0.35+0.65*l):"#222");
+      it.glow.setAttribute("fill",rgbS(c)); it.glow.setAttribute("opacity",on?(0.85*l).toFixed(2):0);
+    }else if(grp(f)==="heads"){
+      const l=v.lvl, c=v.rgb, on=l>0.02&&(c[0]+c[1]+c[2])>10;
+      const ang=((v.pan||0)+v.sign*((v.homePan??128)-128)*540/256)*Math.PI/180; const len=Math.max(0.4,1.6+((v.tilt||0)+((v.homeTilt??100)-100)*195/256)/45*1.1); const spread=0.06+v.zoom*0.32;
+      const dx=Math.sin(-ang), dy=Math.cos(ang);
+      const px=-dy, py=dx; const ex=f.x+dx*len, ey=f.y+dy*len; const w=len*spread;
+      it.beam.setAttribute("d",`M${f.x} ${f.y} L${ex+px*w} ${ey+py*w} L${ex-px*w} ${ey-py*w} Z`);
+      it.beam.setAttribute("fill",rgbS(c)); it.beam.setAttribute("opacity",on?(0.45*l).toFixed(2):0);
+      it.lens.setAttribute("fill",on?rgbS(c,0.4+0.6*l):"#000");
+      if(v.ring&&v.ringLvl>0.02){ it.ring.setAttribute("stroke",rgbS(v.ring)); it.ring.setAttribute("opacity",(0.9*v.ringLvl).toFixed(2)); } else it.ring.setAttribute("opacity",0);
+    }else if(grp(f)==="fog"){
+      it.cloud.setAttribute("opacity",v.on?0.45:0);
+    }
+  });
+}
+let liveBuilt=false, editBuilt=false;
+function drawLive(){ const s=document.getElementById("svgLive"); if(!s) return; if(!liveBuilt){ buildStage(s,false); liveBuilt=true; } paint(s); }
+function drawEdit(){ const s=document.getElementById("svgEdit"); if(!editBuilt){ buildStage(s,true); editBuilt=true; } paint(s); }
+function rebuildStages(){ liveBuilt=false; editBuilt=false; }
+
+function enableDrag(svg){
+  let drag=null;
+  const pt=(e)=>{ const p=svg.createSVGPoint(); p.x=e.clientX; p.y=e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+  svg.onpointerdown=(e)=>{
+    const g=e.target.closest(".item"); if(!g) return;
+    const it=svg._items[g.dataset.id]; const p=pt(e);
+    drag={it,dx:it.obj.x-p.x,dy:it.obj.y-p.y,id:e.pointerId}; svg.setPointerCapture(e.pointerId);
+    g.parentNode.appendChild(g); e.preventDefault();
+  };
+  svg.onpointermove=(e)=>{
+    if(!drag||e.pointerId!==drag.id) return;
+    const p=pt(e); const o=drag.it.obj;
+    o.x=Math.round(clamp(p.x+drag.dx,-0.4,stage.w+0.4)*20)/20; o.y=Math.round(clamp(p.y+drag.dy,-0.4,stage.d+0.4)*20)/20;
+    drag.it.g.setAttribute("transform",`translate(${o.x} ${o.y})`);
+  };
+  svg.onpointerup=svg.onpointercancel=(e)=>{ if(drag){ drag=null; save(); liveBuilt=false; } };
+}
+
+/* ================= INTERFACCIA ================= */
+let curTab="live";
+function showTab(t){
+  curTab=t;
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
+  document.querySelectorAll("section").forEach(s=>s.classList.toggle("show",s.id===t));
+  if(t==="palco"){ editBuilt=false; document.getElementById("stW").value=stage.w; document.getElementById("stD").value=stage.d; }
+  if(t==="setup") renderSetup();
+  if(t==="live") liveBuilt=false;
+  if(location.hash.slice(1)!==t){ try{ history.replaceState(null,"","#"+t);}catch(e){} }
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+
+function bindUI(){
+  const lists={"par.effect":PAR_FX,"heads.move":HEAD_MV,"heads.colMode":HEAD_COL,"heads.ring":RING};
+  document.querySelectorAll("[data-chips]").forEach(box=>{
+    const path=box.dataset.chips;
+    box.innerHTML=""; lists[path].forEach(([v,l])=>{ const b=document.createElement("button"); b.textContent=l; b.dataset.v=v; b.onclick=()=>{ setP(path,v); refreshUI(); }; box.appendChild(b); });
+  });
+  document.querySelectorAll("[data-wheel]").forEach(makeWheel);
+  document.querySelectorAll("[data-range]").forEach(inp=>{
+    const path=inp.dataset.range;
+    inp.oninput=()=>{ setP(path,+inp.value); refreshUI(); };
+  });
+  document.querySelectorAll("[data-tog]").forEach(b=>{
+    const path=b.dataset.tog;
+    b.onclick=()=>{ setP(path,!getP(path)); if(path==="fog.auto") lastFogAuto=performance.now()-S.fog.every*1000; refreshUI(); };
+  });
+  const m=document.getElementById("master"); m.oninput=()=>{ S.master=+m.value; save(); refreshUI(); };
+  document.getElementById("btnBlack").onclick=()=>{ S.blackout=!S.blackout; save(); refreshUI(); };
+  hold(document.getElementById("btnFlash"),v=>{ flash=v; sendMsg({type:"mom",flash:v}); });
+  hold(document.getElementById("btnFog"),v=>{ fogHold=v; sendMsg({type:"mom",fogHold:v}); });
+  document.getElementById("btnFog5").onclick=()=>{ fogUntil=performance.now()+5000; sendMsg({type:"mom",fogFor:5000}); };
+  document.getElementById("bpmMinus").onclick=()=>{ S.bpm=clamp(S.bpm-1,40,220); save(); refreshUI(); };
+  document.getElementById("bpmPlus").onclick=()=>{ S.bpm=clamp(S.bpm+1,40,220); save(); refreshUI(); };
+  let taps=[];
+  document.getElementById("btnTap").onclick=()=>{
+    const now=performance.now(); taps=taps.filter(x=>now-x<2500); taps.push(now);
+    if(taps.length>=2){ const iv=[]; for(let i=1;i<taps.length;i++) iv.push(taps[i]-taps[i-1]); const avg=iv.reduce((a,b)=>a+b)/iv.length; S.bpm=clamp(Math.round(60000/avg),40,220); tStart=now; sendMsg({type:"tap"}); save(); refreshUI(); }
+  };
+  document.getElementById("btnResetLayout").onclick=()=>{
+    const df=defaultFixtures(); fixtures.forEach(f=>{ const d=df.find(x=>x.id===f.id); if(d){ f.x=d.x; f.y=d.y; } });
+    decor=defaultDecor(); stage={w:8,d:5}; save(); rebuildStages(); showTab("palco");
+  };
+  ["stW","stD"].forEach(id=>document.getElementById(id).onchange=()=>{ stage.w=clamp(+document.getElementById("stW").value||8,3,20); stage.d=clamp(+document.getElementById("stD").value||5,2,15); save(); rebuildStages(); });
+  bindAdd();
+  const ip=document.getElementById("netIp"), un=document.getElementById("netUni");
+  ip.value=net.ip; un.value=net.uni;
+  ip.onchange=()=>{ net.ip=ip.value.trim(); save(); }; un.onchange=()=>{ net.uni=+un.value||0; save(); };
+}
+function hold(btn,fn){
+  const on=e=>{ e.preventDefault(); fn(true); btn.classList.add("on"); };
+  const off=()=>{ fn(false); btn.classList.remove("on"); };
+  btn.addEventListener("pointerdown",on); ["pointerup","pointerleave","pointercancel"].forEach(ev=>btn.addEventListener(ev,off));
+}
+function refreshUI(){
+  document.querySelectorAll("[data-chips]").forEach(box=>{ const v=getP(box.dataset.chips); box.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.v===v)); });
+  document.querySelectorAll("[data-wheel]").forEach(w=>w._refresh&&w._refresh());
+  document.querySelectorAll("[data-range]").forEach(inp=>{ const p=inp.dataset.range, v=getP(p); inp.value=v; const out=inp.parentNode.querySelector(".v"); if(out) out.textContent=p.startsWith("fog.")?v+" s":p==="heads.phase"?Math.round(v*3.6)+"°":v+"%"; });
+  document.querySelectorAll("[data-tog]").forEach(b=>{ const v=!!getP(b.dataset.tog); b.classList.toggle("on",v); if(b.dataset.tog.endsWith(".on")) b.textContent=v?"ON":"OFF"; });
+  document.getElementById("master").value=S.master; document.getElementById("masterV").textContent=S.master+"%";
+  document.getElementById("btnBlack").classList.toggle("on",S.blackout);
+  document.getElementById("bpmV").textContent=S.bpm+" BPM";
+  document.getElementById("cardPar").style.opacity=S.par.on?1:.55;
+  document.getElementById("cardHeads").style.opacity=(S.heads.on||point)?1:.55;
+  document.getElementById("btnPoint").classList.toggle("on",point);
+  document.getElementById("pointBox").hidden=!point;
+  renderPresets();
+}
+
+/* ================= RUOTA COLORI ================= */
+function makeWheel(box){
+  const grp=box.dataset.wheel, isPar=grp==="par";
+  const slots=isPar?[["A","colA"],["B","colB"],["C","colC"]]:[["A","colA"],["B","colB"]];
+  let act=0;
+  box.innerHTML=`<div class="wheel"></div><div class="wside"><div class="slots"></div><div class="quick"></div><p class="hint" style="margin:0">Tocca A, B${isPar?" o C":""} e poi un punto della ruota: al centro il bianco, sul bordo i colori pieni.</p></div>`;
+  const wheel=box.querySelector(".wheel"), slotBox=box.querySelector(".slots"), quick=box.querySelector(".quick");
+  const handles=slots.map(([l])=>{ const h=document.createElement("div"); h.className="h"; h.textContent=l; wheel.appendChild(h); return h; });
+  const path=i=>grp+"."+slots[i][1];
+  slots.forEach(([l],i)=>{ const b=document.createElement("button"); b.innerHTML=`<i></i>${l}`; b.onclick=()=>{ act=i; refresh(); }; slotBox.appendChild(b); });
+  const q=[["bianco","Bianco"],["caldo","Caldo"],["ambra","Ambra"]].concat(isPar?[["UV","UV"]]:[]).concat([["spento","Spento"]]).concat(isPar?[["","Nessuno (solo C)"]]:[]);
+  q.forEach(([v,l])=>{ const b=document.createElement("button"); b.innerHTML=(v?`<i style="background:${colCss(v)}"></i>`:"")+l; b.dataset.v=v;
+    b.onclick=()=>{ if(v===""){ setP(path(2),""); } else setP(path(act),v); refreshUI(); }; quick.appendChild(b); });
+  function setFromPoint(e){
+    const r=wheel.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2, R=r.width/2;
+    const dx=e.clientX-cx, dy=e.clientY-cy; let sat=Math.min(1,Math.hypot(dx,dy)/R); if(sat<0.08) sat=0;
+    let h=Math.atan2(dx,-dy)/(2*Math.PI); if(h<0) h+=1;
+    setP(path(act),hsvHex(h,sat)); refresh(); 
+  }
+  let drag=false;
+  wheel.onpointerdown=e=>{ drag=true; wheel.setPointerCapture(e.pointerId); setFromPoint(e); e.preventDefault(); };
+  wheel.onpointermove=e=>{ if(drag) setFromPoint(e); };
+  wheel.onpointerup=wheel.onpointercancel=()=>{ if(drag){ drag=false; refreshUI(); } };
+  function refresh(){
+    slots.forEach((sl,i)=>{
+      const v=getP(path(i)), h=handles[i], b=slotBox.children[i];
+      b.classList.toggle("on",i===act);
+      b.querySelector("i").style.background=v?colCss(v):"repeating-linear-gradient(45deg,#333 0 3px,#1d222c 3px 6px)";
+      const hx=v&&v[0]==="#"?v:(v&&!["bianco","caldo","ambra","UV","spento"].includes(v)?PALCSS[v]:null);
+      if(hx){ const {h:hu,s:sa}=hexHS(hx); const a=hu*2*Math.PI; h.style.display="flex"; h.style.left=(50+50*sa*Math.sin(a))+"%"; h.style.top=(50-50*sa*Math.cos(a))+"%"; h.style.background=hx; }
+      else h.style.display="none";
+      h.classList.toggle("act",i===act);
+    });
+    const cur=getP(path(act));
+    quick.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.v!==""&&b.dataset.v===cur));
+  }
+  box._refresh=refresh; refresh();
+}
+
+/* ================= PUNTAMENTO ================= */
+let pointWho="all", fine=false;
+function pointTargets(){ const hs=headList(); if(pointWho==="all") return hs; return hs.filter(f=>f.id===pointWho); }
+function nudge(dx,dy){ // dx,dy in unità DMX
+  const hs=headList();
+  pointTargets().forEach(f=>{
+    const k=hs.indexOf(f); const mir=(pointWho==="all"&&S.heads.mirror&&k%2===1)?-1:1;
+    f.homePan=Math.max(0,Math.min(255,f.homePan+dx*mir)); f.homeTilt=Math.max(0,Math.min(255,f.homeTilt+dy));
+  });
+  save(); drawXY();
+}
+function drawXY(){
+  const pad=document.getElementById("xyPad"); if(!pad) return;
+  pad.querySelectorAll(".dot").forEach(e=>e.remove());
+  headList().forEach((f,k)=>{
+    const d=document.createElement("div"); d.className="dot";
+    d.style.left=(f.homePan/255*100)+"%"; d.style.top=(100-f.homeTilt/255*100)+"%"; d.style.marginLeft=(k%2?-3:-27)+"px";
+    const sel=pointWho==="all"||pointWho===f.id; d.style.background=sel?"var(--acc)":"#333"; d.style.color=sel?"#111":"#aaa";
+    d.textContent=f.name.replace(/^Testa\s*/i,"").slice(0,3); pad.appendChild(d);
+  });
+}
+function renderPointWho(){
+  const box=document.getElementById("pointWho"); box.innerHTML="";
+  [["all","Entrambe"],...headList().map(f=>[f.id,f.name])].forEach(([v,l])=>{
+    const b=document.createElement("button"); b.textContent=l; b.classList.toggle("on",pointWho===v);
+    b.onclick=()=>{ pointWho=v; renderPointWho(); drawXY(); }; box.appendChild(b);
+  });
+}
+function bindPoint(){
+  document.getElementById("btnPoint").onclick=()=>{ point=!point; sendMsg({type:"mom",point}); if(point){ renderPointWho(); drawXY(); } refreshUI(); };
+  document.getElementById("pointDone").onclick=()=>{ point=false; sendMsg({type:"mom",point:false}); refreshUI(); };
+  document.getElementById("btnFine").onclick=e=>{ fine=!fine; e.target.classList.toggle("on",fine); };
+  document.querySelectorAll("[data-nud]").forEach(b=>b.onclick=()=>{ const [x,y]=b.dataset.nud.split(",").map(Number); const st=fine?0.25:2; nudge(x*st,y*st); });
+  const pad=document.getElementById("xyPad"); let last=null;
+  pad.onpointerdown=e=>{ pad.setPointerCapture(e.pointerId); last={x:e.clientX,y:e.clientY}; e.preventDefault(); };
+  pad.onpointermove=e=>{ if(!last) return; const r=pad.getBoundingClientRect(); const k=fine?0.2:1;
+    const dx=(e.clientX-last.x)/r.width*255*k, dy=-(e.clientY-last.y)/r.height*255*k; last={x:e.clientX,y:e.clientY}; nudge(dx,dy); };
+  pad.onpointerup=pad.onpointercancel=()=>{ last=null; };
+}
+
+/* ================= PRESET ================= */
+let presetEdit=false, presetScope="tutto";
+const clone=o=>JSON.parse(JSON.stringify(o));
+function renderPresets(){
+  const box=document.getElementById("presetList"); if(!box) return;
+  box.innerHTML=""; box.parentNode.classList.toggle("editing",presetEdit);
+  document.getElementById("presetEmpty").hidden=presets.length>0;
+  document.getElementById("btnPresetEdit").classList.toggle("on",presetEdit);
+  document.getElementById("btnPresetEdit").textContent=presetEdit?"Fine modifica":"Modifica";
+  presets.forEach((p,i)=>{
+    const b=document.createElement("button"); b.className="preset"+(curPreset===i?" cur":"");
+    b.innerHTML=`${p.name.replace(/</g,"&lt;")}<small>${p.par&&p.heads?"PAR + teste":p.par?"solo PAR":"solo teste"}</small><span class="del">✕</span>`;
+    b.onclick=()=>{
+      if(presetEdit){ presets.splice(i,1); if(curPreset===i) curPreset=null; save(); refreshUI(); return; }
+      if(p.par) Object.assign(S.par,{colC:""},clone(p.par));
+      if(p.heads){ const keepOn=S.heads.home; Object.assign(S.heads,clone(p.heads)); S.heads.home=keepOn; }
+      curPreset=i; save(); refreshUI();
+    };
+    box.appendChild(b);
+  });
+  const box2=document.getElementById("presetList2");
+  if(box2){ box2.innerHTML=presets.length?"":'<span class="hint" style="margin:0">nessun preset salvato</span>';
+    presets.forEach((p,i)=>{ const b=document.createElement("button"); b.textContent=p.name; b.classList.toggle("on",curPreset===i);
+      b.onclick=()=>{ if(p.par) Object.assign(S.par,{colC:""},clone(p.par)); if(p.heads){ const h=S.heads.home; Object.assign(S.heads,clone(p.heads)); S.heads.home=h; } curPreset=i; save(); refreshUI(); };
+      box2.appendChild(b); }); }
+}
+function bindPresets(){
+  const sv=document.getElementById("presetSave");
+  document.getElementById("btnPresetNew").onclick=()=>{ sv.hidden=false; const n=document.getElementById("presetName"); n.value="Preset "+(presets.length+1); n.focus(); n.select(); };
+  document.getElementById("presetCancel").onclick=()=>{ sv.hidden=true; };
+  document.querySelectorAll("#presetScope button").forEach(b=>b.onclick=()=>{ presetScope=b.dataset.v; document.querySelectorAll("#presetScope button").forEach(x=>x.classList.toggle("on",x===b)); });
+  document.getElementById("presetOk").onclick=()=>{
+    const name=document.getElementById("presetName").value.trim()||("Preset "+(presets.length+1));
+    const p={name}; if(presetScope!=="heads") p.par=clone(S.par); if(presetScope!=="par") p.heads=clone(S.heads);
+    presets.push(p); curPreset=presets.length-1; sv.hidden=true; save(); refreshUI();
+  };
+  document.getElementById("presetName").onkeydown=e=>{ if(e.key==="Enter") document.getElementById("presetOk").click(); };
+  document.getElementById("btnPresetEdit").onclick=()=>{ presetEdit=!presetEdit; refreshUI(); };
+}
+
+/*LIB-START*/
+// Lettura della libreria profili di QLC+ (usata dall'app iPad e dalla centralina)
+const LIB=(()=>{
+  const ent=s=>String(s).replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,"&");
+  const norm=s=>ent(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+  const BASE="https://raw.githubusercontent.com/mcallegari/qlcplus/master/resources/fixtures/";
+  function parseIndex(xml){
+    const list=[];
+    for(const m of xml.matchAll(/<M n="([^"]+)">([\s\S]*?)<\/M>/g)){
+      const man=ent(m[1]);
+      for(const f of m[2].matchAll(/<F n="([^"]+)" m="([^"]*)"\s*\/>/g)) list.push({man,file:ent(f[1]),model:ent(f[2]),key:norm(man+" "+f[2]+" "+f[1])});
+    }
+    return list;
+  }
+  function search(list,q){
+    const words=norm(q).split(" ").filter(Boolean); if(!words.length) return [];
+    const compact=words.join("");
+    return list.filter(e=>words.every(w=>e.key.includes(w))||e.key.replace(/ /g,"").includes(compact)).slice(0,40).map(({man,file,model})=>({man,file,model}));
+  }
+  const url=(man,file)=>BASE+encodeURIComponent(man)+"/"+encodeURIComponent(file)+".qxf";
+  const COLOR={IntensityRed:"red",IntensityGreen:"green",IntensityBlue:"blue",IntensityWhite:"white",IntensityAmber:"amber",IntensityYellow:"amber",IntensityUV:"uv"};
+  function capsList(body){ return [...body.matchAll(/<Capability Min="(\d+)" Max="(\d+)"([^>]*)>([^<]*)</g)].map(c=>({min:+c[1],max:+c[2],preset:(c[3].match(/Preset="([^"]+)"/)||[])[1]||"",text:ent(c[4])})); }
+  function strobeRole(caps,name){
+    const isStrobe=c=>/^Strobe(SlowToFast|FreqRange|Frequency)$/.test(c.preset)||c.preset==="ShutterStrobeSlowFast"||(!c.preset&&/strob/i.test(c.text)&&!/random|sound|music|audio|puls/i.test(c.text));
+    const st=caps.find(isStrobe); if(!st) return null;
+    const open=caps.find(c=>c.preset==="ShutterOpen"||c.preset==="LampOn"||/^(open|on|no strobe|no function|nothing|off|none|shutter open|light on)\b/i.test(c.text.trim())&&!isStrobe(c));
+    const f2s=/FastToSlow|fast\s*(to|->|-)\s*slow/i.test(st.preset+" "+st.text);
+    return {r:"strobe",n:name,off:open?Math.round((open.min+open.max)/2):0,min:f2s?st.max:st.min,max:f2s?st.min:st.max};
+  }
+  function restValue(caps){
+    if(!caps.length) return 0;
+    const n=caps.find(c=>/^(no function|nothing|none|off|no effect|no rotation|open|blackout off|normal|disabled|idle)\b/i.test(c.text.trim())||c.preset==="NoFunction"||c.preset==="ShutterOpen");
+    return n?n.min:0;
+  }
+  function channelRole(name,body,ftype){
+    const P=(body.match(/^[^>]*Preset="([^"]+)"/)||[])[1]||"";
+    const group=(body.match(/<Group Byte="(\d)">([^<]+)<\/Group>/)||[]);
+    const colour=(body.match(/<Colour>([^<]+)<\/Colour>/)||[])[1]||"";
+    const caps=capsList(body), n=name, low=name.toLowerCase();
+    if(COLOR[P]) return {r:COLOR[P],n};
+    if(P==="IntensityMasterDimmer"||P==="IntensityDimmer") return {r:"dimmer",n};
+    if(P==="PositionPan") return {r:"pan",n}; if(P==="PositionPanFine") return {r:"panFine",n};
+    if(P==="PositionTilt") return {r:"tilt",n}; if(P==="PositionTiltFine") return {r:"tiltFine",n};
+    if(P==="SpeedPanTiltFastSlow") return {r:"fixed",n,v:0}; if(P==="SpeedPanTiltSlowFast") return {r:"fixed",n,v:255};
+    if(P==="BeamZoomSmallBig") return {r:"zoom",n}; if(P==="BeamZoomBigSmall") return {r:"zoomInv",n};
+    if(/Fine$/.test(P)) return {r:"fixed",n,v:0};
+    const g=group[2]||"", byte=+(group[1]||0);
+    if(g==="Intensity"){
+      const cm={Red:"red",Green:"green",Blue:"blue",White:"white",Amber:"amber",Yellow:"amber",UV:"uv"};
+      if(byte===1) return {r:"fixed",n,v:0};
+      if(cm[colour]) return {r:cm[colour],n};
+      if(/red|rosso/.test(low)) return {r:"red",n}; if(/green|verde/.test(low)) return {r:"green",n};
+      if(/blue|blu/.test(low)) return {r:"blue",n}; if(/white|bianco/.test(low)) return {r:"white",n};
+      if(/amber|ambra|yellow/.test(low)) return {r:"amber",n}; if(/\buv\b|ultra|purple|violet/.test(low)) return {r:"uv",n};
+      if(/dimm|intens|master/.test(low)||!colour) return {r:"dimmer",n};
+    }
+    if(g==="Pan") return {r:byte?"panFine":"pan",n};
+    if(g==="Tilt") return {r:byte?"tiltFine":"tilt",n};
+    if(g==="Beam"&&/zoom/.test(low)) return {r:"zoom",n};
+    if(g==="Shutter"||/strob|shutter/.test(low)||caps.some(c=>/^Strobe|^Shutter/.test(c.preset))){ const st=strobeRole(caps,n); if(st) return st; }
+    if(/smoke|hazer|fog/i.test(ftype)&&/fog|smoke|output|haze|fumo|pump|volume|on.?off|jet|emission/.test(low)) return {r:"fog",n};
+    return {r:"fixed",n,v:restValue(caps)};
+  }
+  function parseQxf(xml){
+    const man=ent((xml.match(/<Manufacturer>([^<]*)</)||[])[1]||""), model=ent((xml.match(/<Model>([^<]*)</)||[])[1]||""), type=ent((xml.match(/<Type>([^<]*)</)||[])[1]||"");
+    const chans={};
+    for(const c of xml.matchAll(/<Channel Name="([^"]+)"([^>]*?)(\/>|>([\s\S]*?)<\/Channel>)/g)){ const name=ent(c[1]); chans[name]=channelRole(name,c[2]+">"+(c[4]||""),type); }
+    const modes=[];
+    for(const m of xml.matchAll(/<Mode Name="([^"]+)">([\s\S]*?)<\/Mode>/g)){
+      const list=[...m[2].matchAll(/<Channel Number="(\d+)"[^>]*>([^<]+)<\/Channel>/g)].sort((a,b)=>a[1]-b[1]).map(x=>ent(x[2]));
+      const cnt={};
+      const channels=list.map(nm=>{
+        const c=Object.assign({},chans[nm]||{r:"fixed",n:nm,v:0});
+        if(["red","green","blue","white","amber","uv"].includes(c.r)){ c.z=cnt[c.r]=(cnt[c.r]===undefined?0:cnt[c.r]+1); if(!c.z) delete c.z; }
+        if(["pan","tilt","dimmer","zoom","zoomInv","strobe","panFine","tiltFine"].includes(c.r)){ const k=c.r; if(cnt[k]){ c.v=k==="strobe"?c.off:0; c.r="fixed"; } cnt[k]=1; }
+        return c;
+      });
+      const rs=channels.map(c=>c.r);
+      const group=/smoke|hazer/i.test(type)||(rs.includes("fog")&&!rs.includes("pan"))?"fog":rs.includes("pan")||rs.includes("tilt")?"heads":"par";
+      modes.push({name:ent(m[1]),group,channels});
+    }
+    return {man,model,type,modes};
+  }
+  return {BASE,parseIndex,search,url,parseQxf};
+})();
+/*LIB-END*/
+
+/* ================= AGGIUNGI FARO ================= */
+const ROLE_IT={dimmer:"Dimmer",red:"Rosso",green:"Verde",blue:"Blu",white:"Bianco",amber:"Ambra",uv:"UV",strobe:"Strobo",pan:"Pan",panFine:"Pan fine",tilt:"Tilt",tiltFine:"Tilt fine",zoom:"Zoom",zoomInv:"Zoom (invertito)",ringDimmer:"Anello: dimmer",ringFx:"Anello: effetti",ringSpeed:"Anello: velocità",fog:"Fumo",fixed:"Non usato"};
+const GROUP_IT={par:"PAR (giochi PAR)",heads:"Testa mobile",fog:"Fumo"};
+const escH=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function chanTable(P,addr){
+  if(!P) return "";
+  return `<div class="dmxgrid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">`+P.channels.map((c,i)=>{
+    let what=ROLE_IT[c.r]||c.r; if(c.z==="ring") what="Anello: "+what.toLowerCase(); else if(c.z) what+=" zona "+c.z;
+    if(c.r==="fixed") what+=" (fisso a "+(c.v||0)+")"; if(c.r==="strobe") what+=` (${c.min}–${c.max})`;
+    return `<div style="text-align:left;padding:5px 7px"><span>${addr?("DMX "+(addr+i)):("Can. "+(i+1))}${c.n?" · "+escH(c.n):""}</span><b style="font-size:12px">${escH(what)}</b></div>`;
+  }).join("")+`</div>`;
+}
+let addSel=null;
+function setAddSel(P,msg){
+  addSel=P;
+  document.getElementById("addPreview").innerHTML=P?`<p style="margin:10px 0 6px"><b>${escH(P.label)}</b> · ${GROUP_IT[P.group]||P.group} · ${P.channels.length} canali</p>`+chanTable(P):"";
+  document.getElementById("addMsg").innerHTML=msg||"";
+  document.getElementById("addGo").disabled=!P;
+  if(P){ const nm=document.getElementById("addName"); nm.value=(P.group==="heads"?"Testa":P.group==="fog"?"Fumo":"PAR")+" nuovo"; }
+}
+function validProfile(o){
+  const roles=Object.keys(ROLE_IT);
+  if(!o||!Array.isArray(o.channels)||!o.channels.length||o.channels.length>64) return "manca l'elenco dei canali";
+  for(const c of o.channels){ if(!c||!roles.includes(c.r)) return "ruolo sconosciuto: "+(c&&c.r); }
+  if(!["par","heads","fog"].includes(o.group)) return "gruppo non valido (par, heads o fog)";
+  return "";
+}
+async function apiGet(url){
+  const r=await fetch(url); const j=await r.json().catch(()=>({error:"risposta non valida"}));
+  if(!r.ok||j.error) throw new Error(j.error||("errore "+r.status)); return j;
+}
+function bindAdd(){
+  const panel=document.getElementById("addPanel");
+  document.getElementById("btnAdd").onclick=()=>{ panel.hidden=!panel.hidden; if(!panel.hidden){ fillMine(); document.getElementById("libQ").focus(); } };
+  document.getElementById("addClose").onclick=()=>{ panel.hidden=true; setAddSel(null); };
+  document.querySelectorAll("#addTabs button").forEach(b=>b.onclick=()=>{
+    document.querySelectorAll("#addTabs button").forEach(x=>x.classList.toggle("on",x===b));
+    panel.querySelectorAll("[data-p]").forEach(p=>p.hidden=p.dataset.p!==b.dataset.t);
+    setAddSel(null); if(b.dataset.t==="mine") pickMine();
+  });
+  function fillMine(){ const sel=document.getElementById("addMine"); sel.innerHTML=Object.values(TYPES).map(P=>`<option value="${escH(P.id)}">${escH(P.label)}</option>`).join(""); }
+  function pickMine(){ fillMine(); setAddSel(TYPES[document.getElementById("addMine").value]); }
+  document.getElementById("addMine").onchange=pickMine;
+  const doSearch=async()=>{
+    const q=document.getElementById("libQ").value.trim(); if(!q) return;
+    const res=document.getElementById("libRes"); document.getElementById("libModes").innerHTML=""; setAddSel(null,"Cerco…"); res.innerHTML="";
+    try{
+      const j=NATIVE?await libSearch(q):await apiGet("/api/lib/search?q="+encodeURIComponent(q));
+      setAddSel(null, j.results.length?"Tocca il tuo modello:":"Nessun faro trovato. Prova con meno parole (solo la marca, o solo il modello), oppure mandami la foto della tabella DMX.");
+      j.results.forEach(r=>{ const b=document.createElement("button"); b.innerHTML=`<small style="display:block;color:var(--sub);font-size:11px">${escH(r.man)}</small>${escH(r.model)}`; b.style.textAlign="left";
+        b.onclick=()=>openFixture(r,b); res.appendChild(b); });
+    }catch(e){ setAddSel(null, location.hostname&&!/claude|anthropic|usercontent/.test(location.hostname)
+      ? "Non riesco a raggiungere la libreria: "+escH(e.message)
+      : "La ricerca funziona quando apri l'app dalla centralina collegata a internet. Qui nell'anteprima puoi usare \"Incolla profilo\"."); }
+  };
+  document.getElementById("libGo").onclick=doSearch;
+  document.getElementById("libQ").onkeydown=e=>{ if(e.key==="Enter") doSearch(); };
+  async function openFixture(r,btn){
+    document.querySelectorAll("#libRes button").forEach(x=>x.classList.toggle("on",x===btn));
+    const box=document.getElementById("libModes"); box.innerHTML='<span class="hint">Carico il profilo…</span>'; setAddSel(null);
+    try{
+      const fx=NATIVE?await libGet(r.man,r.file):await apiGet("/api/lib/get?man="+encodeURIComponent(r.man)+"&file="+encodeURIComponent(r.file));
+      box.innerHTML='<div class="lab">Modalità DMX (scegli quella impostata sul faro)</div><div class="chips"></div>';
+      const chips=box.querySelector(".chips");
+      fx.modes.forEach(m=>{ const b=document.createElement("button"); b.textContent=m.name; b.onclick=()=>{
+        chips.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+        const id="q_"+(fx.man+"_"+fx.model+"_"+m.name).toLowerCase().replace(/[^a-z0-9]+/g,"_");
+        setAddSel({id, label:`${fx.man} ${fx.model} (${m.channels.length} can.)`, group:m.group, shape:"round", src:"QLC+", channels:m.channels},
+          "Controlla che i canali corrispondano al manuale. I canali \"Non usato\" restano fissi sul valore indicato.");
+      }; chips.appendChild(b); });
+      if(fx.modes.length===1) chips.querySelector("button").click();
+    }catch(e){ box.innerHTML=`<span class="warn">${escH(e.message)}</span>`; }
+  }
+  document.getElementById("pasteGo").onclick=()=>{
+    let o; try{ o=JSON.parse(document.getElementById("pasteTxt").value); }catch(e){ setAddSel(null,'<span class="warn">Il testo non è un profilo valido: copialo tutto, dalla prima { all\'ultima }.</span>'); return; }
+    const err=validProfile(o); if(err){ setAddSel(null,'<span class="warn">Profilo non valido: '+escH(err)+'</span>'); return; }
+    o.id=o.id&&/^[a-z0-9_]+$/i.test(o.id)?o.id:"u_"+Date.now().toString(36); o.label=o.label||"Faro personalizzato"; o.shape=o.shape||"round";
+    setAddSel(o,"Profilo letto. Controlla i canali e aggiungi il faro.");
+  };
+  document.getElementById("addGo").onclick=()=>{
+    const P=addSel; if(!P) return;
+    if(!TYPES[P.id]){ const clean=JSON.parse(JSON.stringify(P)); delete clean._caps; delete clean.ch; registerProfiles(profiles.concat([clean])); }
+    const ch=TYPES[P.id].ch, qty=clamp(Math.round(+document.getElementById("addQty").value)||1,1,24);
+    const base=document.getElementById("addName").value.trim()||"Faro";
+    let next=fixtures.reduce((m,f)=>Math.max(m,f.addr+((TYPES[f.type]||{ch:1}).ch)-1),0)+1;
+    const added=[];
+    for(let i=0;i<qty;i++){
+      if(next+ch-1>512) break;
+      const f={id:"x"+Date.now().toString(36)+i,type:P.id,name:qty>1?base+" "+(i+1):base,addr:next,x:Math.round((stage.w/2+(i-(qty-1)/2)*0.45)*20)/20,y:Math.round(stage.d*0.6*20)/20};
+      if(P.group==="heads"){ f.homePan=128; f.homeTilt=100; f.invPan=false; }
+      fixtures.push(f); added.push(f); next+=ch;
+    }
+    save(); rebuildStages(); renderSetup();
+    setAddSel(null, added.length?`Aggiunt${added.length>1?"i":"o"} ${added.length} far${added.length>1?"i":"o"}: indirizz${added.length>1?"i":"o"} ${added.map(f=>f.addr).join(", ")}. Imposta questi indirizzi sui fari e trascinali al loro posto nella scheda Palco.`:'<span class="warn">Non ci sono più canali liberi nell\'universo.</span>');
+  };
+}
+
+/* ================= SETUP ================= */
+function overlaps(){
+  const bad=new Set(); const r=fixtures.map(f=>[f.id,f.addr,f.addr+((TYPES[f.type]||{ch:1}).ch)-1]);
+  for(let i=0;i<r.length;i++) for(let j=i+1;j<r.length;j++) if(r[i][1]<=r[j][2]&&r[j][1]<=r[i][2]){ bad.add(r[i][0]); bad.add(r[j][0]); }
+  return bad;
+}
+function renderSetup(){
+  const tb=document.getElementById("fixRows"); tb.innerHTML=""; const bad=overlaps();
+  fixtures.forEach(f=>{
+    if(!TYPES[f.type]) return; const ch=TYPES[f.type].ch, tr=document.createElement("tr");
+    tr.innerHTML=`<td><input value="${f.name.replace(/"/g,"&quot;")}"></td><td><select class="ty">${Object.keys(TYPES).filter(k=>TYPES[k].group===TYPES[f.type].group).map(k=>`<option value="${k}" ${k===f.type?"selected":""}>${TYPES[k].label}</option>`).join("")}</select></td><td><input class="num" type="number" min="1" max="${513-ch}" value="${f.addr}"></td><td>${f.addr}–${f.addr+ch-1}${bad.has(f.id)?' <span class="warn">⚠ sovrapposto</span>':""}</td><td style="white-space:nowrap"><button class="chb">Canali</button> <button class="del">✕</button></td>`;
+    const [nm,ad]=tr.querySelectorAll("input");
+    tr.querySelector("select.ty").onchange=e=>{ f.type=e.target.value; save(); rebuildStages(); renderSetup(); };
+    nm.onchange=()=>{ f.name=nm.value; save(); rebuildStages(); };
+    ad.onchange=()=>{ f.addr=clamp(Math.round(+ad.value)||1,1,513-ch); save(); renderSetup(); rebuildStages(); };
+    tr.querySelector("button.del").onclick=()=>{ fixtures=fixtures.filter(x=>x!==f); save(); rebuildStages(); renderSetup(); };
+    tb.appendChild(tr);
+    const tr2=document.createElement("tr"); tr2.hidden=true; tr2.innerHTML=`<td colspan="5">${chanTable(TYPES[f.type],f.addr)}</td>`; tb.appendChild(tr2);
+    tr.querySelector("button.chb").onclick=e=>{ tr2.hidden=!tr2.hidden; e.target.classList.toggle("on",!tr2.hidden); };
+  });
+  const cb=document.getElementById("calibBox"); cb.innerHTML="";
+  fixtures.filter(f=>grp(f)==="heads").forEach(f=>{
+    const d=document.createElement("div"); d.className="card";
+    d.innerHTML=`<h2>${f.name}</h2>
+      <div class="row"><span class="k">Pan iniziale</span><input type="range" min="0" max="255" step="0.25" value="${f.homePan}"><span class="v">${(+f.homePan).toFixed(1)}</span></div>
+      <div class="row"><span class="k">Tilt iniziale</span><input type="range" min="0" max="255" step="0.25" value="${f.homeTilt}"><span class="v">${(+f.homeTilt).toFixed(1)}</span></div>
+      <div class="lab">Limiti tilt (protezione occhi pubblico)</div>
+      <div class="row"><span class="k">Tilt minimo</span><input type="range" min="0" max="255" step="1" value="${f.tiltMin??0}"><span class="v">${f.tiltMin??0}</span></div>
+      <div class="row"><span class="k">Tilt massimo</span><input type="range" min="0" max="255" step="1" value="${f.tiltMax??255}"><span class="v">${f.tiltMax??255}</span></div>
+      <p class="hint">Mentre muovi uno slider la testa va in bianco esattamente su quel limite: portalo fin dove il fascio resta appena sopra le teste del pubblico. Nessun movimento, puntamento o preset potrà superarlo.</p>
+      <div class="row" style="margin-top:6px"><button class="tog ${f.invPan?"on":""}">Inverti pan</button></div>`;
+    const [p,t,tmin,tmax]=d.querySelectorAll("input"); const vs=d.querySelectorAll(".v");
+    let lpT=null;
+    const lim=(inp,key,vi)=>{ inp.oninput=()=>{ f[key]=+inp.value; vs[vi].textContent=inp.value; limPrev={id:f.id,v:+inp.value}; sendMsg({type:"mom",limPrev}); clearTimeout(lpT); lpT=setTimeout(()=>{ limPrev=null; sendMsg({type:"mom",limPrev:null}); },1500); save(); }; };
+    lim(tmin,"tiltMin",2); lim(tmax,"tiltMax",3);
+    p.oninput=()=>{ f.homePan=+p.value; vs[0].textContent=(+p.value).toFixed(1); save(); drawXY(); };
+    t.oninput=()=>{ f.homeTilt=+t.value; vs[1].textContent=(+t.value).toFixed(1); save(); drawXY(); };
+    const b=d.querySelector("button.tog"); b.onclick=()=>{ f.invPan=!f.invPan; b.classList.toggle("on",f.invPan); save(); };
+    cb.appendChild(d);
+  });
+  const g=document.getElementById("dmxGrid"); const nCh=Math.min(512,Math.max(120,Math.ceil(fixtures.reduce((m,f)=>Math.max(m,f.addr+((TYPES[f.type]||{ch:1}).ch)-1),0)/24)*24));
+  if(g.children.length!==nCh){ g.innerHTML=""; for(let i=0;i<nCh;i++){ const c=document.createElement("div"); c.innerHTML=`${i+1}<b>0</b><i></i>`; g.appendChild(c); } }
+  const mt=document.getElementById("monTitle"); if(mt) mt.textContent=`Monitor DMX (canali 1–${nCh})`;
+}
+function drawMonitor(){
+  const g=document.getElementById("dmxGrid"); if(!g.children.length) return;
+  for(let i=0;i<g.children.length;i++){ const c=g.children[i]; const v=dmx[i]; const b=c.children[0]; if(b.textContent!=String(v)){ b.textContent=v; c.children[1].style.width=(v/255*100)+"%"; } }
+}
+
+/* ================= AVVIO ================= */
+load(); bindUI(); bindPoint(); bindPresets(); refreshUI(); renderCentral(); connect();
+if(NATIVE){ const st=document.getElementById("status"); st.textContent="App iPad · Art-Net diretto"; st.classList.add("live"); }
+const h0=location.hash.slice(1); showTab(["live","palco","setup"].includes(h0)?h0:"live");
+window.addEventListener("hashchange",()=>{ const h=location.hash.slice(1); if(["live","palco","setup"].includes(h)&&h!==curTab) showTab(h); });
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

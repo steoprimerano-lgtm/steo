@@ -1,0 +1,7 @@
+*.xcodeproj/
+build/
+Payload/
+*.ipa
+centralina/dati-luci.json
+centralina/cache-libreria/
+.DS_Store

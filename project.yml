@@ -1,0 +1,28 @@
+name: CentralinaLuci
+options:
+  bundleIdPrefix: com.steoprimerano
+  deploymentTarget:
+    iOS: "15.0"
+targets:
+  CentralinaLuci:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: web
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_NAME: CentralinaLuci
+        PRODUCT_BUNDLE_IDENTIFIER: com.steoprimerano.centralinaluci
+        INFOPLIST_FILE: Config/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGN_IDENTITY: ""
+        DEVELOPMENT_TEAM: ""
