@@ -20,7 +20,7 @@ jobs:
       - name: Crea il progetto Xcode
         run: xcodegen generate
 
-      - name: Compila (senza firma: la firma la fa SideStore)
+      - name: "Compila (senza firma, la firma la fa SideStore)"
         run: |
           xcodebuild -project CentralinaLuci.xcodeproj -scheme CentralinaLuci \
             -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
