@@ -81,9 +81,10 @@ main section.show{display:block}
 .mvprev svg.mv{width:100%;max-width:130px;height:46px;background:#0b0d12;border-radius:8px}
 .mvprev .tr{fill:none;stroke:#555c6a;stroke-width:1.2;stroke-dasharray:2 2}
 .mvprev circle{stroke:#fff;stroke-width:1.5}
-.colprev .hd{display:flex;gap:14px}
-.colprev .h2{display:flex;gap:3px;padding:4px;border-radius:12px;background:#0b0d12}
-.colprev .h2 i{width:12px;height:12px;border-radius:50%;display:block}
+.colprev .hd{display:flex;gap:18px;background:#0b0d12;border-radius:10px;padding:6px 14px}
+.colprev .h2{display:flex;flex-direction:column;align-items:center;gap:2px}
+.colprev .h2 i{width:22px;height:22px;border-radius:50%;display:block;border:2px solid #fff}
+.colprev .h2 b{font-size:9px;color:#8b93a3;font-weight:600}
 .g-heads button.on .fxd{color:#1b1240}
 #tabs{display:grid;grid-template-columns:repeat(5,1fr);flex:none;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
 #tabs button{background:none;border:0;border-radius:0;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;color:var(--sub)}
@@ -647,13 +648,10 @@ function drawHeadPreviews(t){
   const sd=stepDur(H.colSpeed,H.sync,1), st=Math.floor(t/sd);
   document.querySelectorAll(".colprev button").forEach(b=>{
     const m=b.dataset.v;
-    b.querySelectorAll(".h2").forEach((h,k)=>h.querySelectorAll("i").forEach((d,z)=>{
-      let c=A;
-      if(m==="alterna") c=((st+k)%2===0)?A:B;
-      else if(m==="zone") c=((z+st+k)%2===0)?A:B;
-      else if(m==="arcobaleno") c=toRgb(hsv(((t/(sd*8))+k*0.5)%1));
-      d.style.background=css(c);
-    }));
+    b.querySelectorAll(".h2 i").forEach((d,k)=>{
+      const zc=z=>{ if(m==="alterna") return ((st+k)%2===0)?A:B; if(m==="zone") return ((z+st+k)%2===0)?A:B; if(m==="arcobaleno") return toRgb(hsv(((t/(sd*8))+k*0.5)%1)); return A; };
+      d.style.background=m==="zone"?`conic-gradient(${css(zc(0))} 0 120deg,${css(zc(1))} 120deg 240deg,${css(zc(2))} 240deg)`:css(zc(0));
+    });
   });
 }
 
@@ -859,8 +857,8 @@ function bindUI(){
   document.querySelectorAll(".fxprev button").forEach(b=>{ const l=b.textContent; b.innerHTML=`<span class="fxn">${l}</span><span class="dots">${"<i></i>".repeat(6)}</span><span class="fxd">${FXD[b.dataset.v]||""}</span>`; });
   const MVD={fermo:"ferme al centro",cerchio:"girano in tondo",otto:"disegnano un 8",ventaglio:"destra e sinistra",onda:"su e giù",incrocio:"si incrociano",quadrato:"fanno un quadrato"};
   document.querySelectorAll(".mvprev button").forEach(b=>{ const l=b.textContent; b.innerHTML=`<span class="fxn">${l}</span><svg viewBox="0 0 120 50" class="mv"><path class="tr"/><path class="tr"/><circle r="5"/><circle r="5"/></svg><span class="fxd">${MVD[b.dataset.v]||""}</span>`; });
-  const CMD={fisso:"tutte e due colore A",alterna:"A e B a turno",zone:"spicchi A e B",arcobaleno:"tutti i colori"};
-  document.querySelectorAll(".colprev button").forEach(b=>{ const l=b.textContent; b.innerHTML=`<span class="fxn">${l}</span><span class="hd">${'<span class="h2"><i></i><i></i><i></i></span>'.repeat(2)}</span><span class="fxd">${CMD[b.dataset.v]||""}</span>`; });
+  const CMD={fisso:"tutte e due colore A",alterna:"A e B a turno",zone:"spicchi A e B in ogni testa",arcobaleno:"tutti i colori"};
+  document.querySelectorAll(".colprev button").forEach(b=>{ const l=b.textContent; b.innerHTML=`<span class="fxn">${l}</span><span class="hd"><span class="h2"><i></i><b>SX</b></span><span class="h2"><i></i><b>DX</b></span></span><span class="fxd">${CMD[b.dataset.v]||""}</span>`; });
   document.querySelectorAll("[data-wheel]").forEach(makeWheel);
   document.querySelectorAll("[data-range]").forEach(inp=>{
     const path=inp.dataset.range;
