@@ -71,12 +71,20 @@ main section.show{display:block}
 .fxprev button{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 6px 10px}
 .fxprev .dots{display:flex;gap:5px}
 .fxprev .dots i{width:13px;height:13px;border-radius:50%;background:#222;display:block}
-.fxprev .fxd{font-size:11px;font-weight:400;color:var(--sub);line-height:1.2}
+.fxd{font-size:11px;font-weight:400;color:var(--sub);line-height:1.2}
 .g-par .fxprev button.on .fxd{color:#06262a}
 .g-par .fxprev button.on .dots{background:#0d0f14;border-radius:10px;padding:4px 6px}
 #parSide .wside{min-width:0}
 #parSide .slots button{padding:12px 10px;font-size:16px;font-weight:600}
 #parSide .quick button{padding:10px 12px;font-size:14px}
+.mvprev button,.colprev button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px}
+.mvprev svg.mv{width:100%;max-width:130px;height:46px;background:#0b0d12;border-radius:8px}
+.mvprev .tr{fill:none;stroke:#555c6a;stroke-width:1.2;stroke-dasharray:2 2}
+.mvprev circle{stroke:#fff;stroke-width:1.5}
+.colprev .hd{display:flex;gap:14px}
+.colprev .h2{display:flex;gap:3px;padding:4px;border-radius:12px;background:#0b0d12}
+.colprev .h2 i{width:12px;height:12px;border-radius:50%;display:block}
+.g-heads button.on .fxd{color:#1b1240}
 #tabs{display:grid;grid-template-columns:repeat(5,1fr);flex:none;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
 #tabs button{background:none;border:0;border-radius:0;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;color:var(--sub)}
 #tabs button svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -235,7 +243,7 @@ td input.num{width:72px}
   <div id="cardHeads"><div class="split2">
     <div class="card">
       <h3>Movimento</h3>
-      <div class="chips fx" data-chips="heads.move"></div>
+      <div class="chips fx mvprev" data-chips="heads.move"></div>
       <div class="row" style="margin-top:8px"><button class="tog" data-tog="heads.mirror">Specchio</button></div>
       <div class="row"><span class="k">Velocità</span><input type="range" min="0" max="100" data-range="heads.speed"><span class="v"></span></div>
       <div class="row"><span class="k">Ampiezza</span><input type="range" min="0" max="100" data-range="heads.size"><span class="v"></span></div>
@@ -243,7 +251,7 @@ td input.num{width:72px}
     </div>
     <div class="card">
       <h3>Colore</h3>
-      <div class="chips fx" data-chips="heads.colMode"></div>
+      <div class="chips fx colprev" data-chips="heads.colMode"></div>
       <div class="row" style="margin-top:6px"><span class="k">Velocità</span><input type="range" min="0" max="100" data-range="heads.colSpeed"><span class="v"></span><button class="tog" data-tog="heads.sync">BPM</button></div>
       <div class="wheelbox" data-wheel="heads" style="margin-top:8px"></div>
     </div>
@@ -585,6 +593,7 @@ function tick(){
   document.getElementById("btnFog").classList.toggle("on",fogOnNow);
   if(NATIVE) sendNative();
   if(curTab==="par") drawFxPreviews(t);
+  if(curTab==="teste") drawHeadPreviews(t);
   drawLive(); if(curTab==="palco") drawEdit(); if(curTab==="setup") drawMonitor();
   requestAnimationFrame(tick);
 }
@@ -607,6 +616,45 @@ function drawFxPreviews(t){
     });
   });
   S.par.effect=keep;
+}
+
+/* anteprime animate delle teste */
+function mvOff(mv,th){
+  switch(mv){
+    case "cerchio": return [Math.cos(th),Math.sin(th)];
+    case "otto": return [Math.sin(th),Math.sin(2*th)];
+    case "ventaglio": return [Math.sin(th),0];
+    case "onda": return [0,Math.sin(th)];
+    case "incrocio": return [Math.sin(th),0.3*Math.sin(2*th)];
+    case "quadrato": { const p=((th/(2*Math.PI))%1+1)%1*4, s=Math.floor(p), q=p-s; const P=[[-1,-1],[1,-1],[1,1],[-1,1],[-1,-1]]; return [lerp(P[s][0],P[s+1][0],q),lerp(P[s][1],P[s+1][1],q)]; }
+  }
+  return [0,0];
+}
+function drawHeadPreviews(t){
+  const H=S.heads, cyc=stepDur(H.speed,false,1)*4, CX=[30,90], sx=24*(0.4+H.size/100*0.6), sy=17*(0.4+H.size/100*0.6);
+  const A=toRgb(colDef(H.colA)), B=toRgb(colDef(H.colB)), css=c=>`rgb(${c[0]},${c[1]},${c[2]})`;
+  document.querySelectorAll(".mvprev button").forEach(b=>{
+    const mv=b.dataset.v, mir=H.mirror||mv==="incrocio", trs=b.querySelectorAll(".tr"), dots=b.querySelectorAll("circle");
+    [0,1].forEach(k=>{
+      const fl=(mir&&k===1)?-1:1;
+      let d=""; for(let i=0;i<=48;i++){ const o=mvOff(mv,i/48*2*Math.PI); d+=(i?"L":"M")+(CX[k]+fl*o[0]*sx).toFixed(1)+" "+(25-o[1]*sy).toFixed(1); }
+      trs[k].setAttribute("d",mv==="fermo"?"":d);
+      const o=mvOff(mv,2*Math.PI*t/cyc+k*(H.phase/100)*2*Math.PI);
+      dots[k].setAttribute("cx",CX[k]+fl*o[0]*sx); dots[k].setAttribute("cy",25-o[1]*sy);
+      dots[k].style.fill=css(A);
+    });
+  });
+  const sd=stepDur(H.colSpeed,H.sync,1), st=Math.floor(t/sd);
+  document.querySelectorAll(".colprev button").forEach(b=>{
+    const m=b.dataset.v;
+    b.querySelectorAll(".h2").forEach((h,k)=>h.querySelectorAll("i").forEach((d,z)=>{
+      let c=A;
+      if(m==="alterna") c=((st+k)%2===0)?A:B;
+      else if(m==="zone") c=((z+st+k)%2===0)?A:B;
+      else if(m==="arcobaleno") c=toRgb(hsv(((t/(sd*8))+k*0.5)%1));
+      d.style.background=css(c);
+    }));
+  });
 }
 
 /* ================= APP IPAD (SideStore) ================= */
@@ -809,6 +857,10 @@ function bindUI(){
   });
   const FXD={statico:"tutti col colore A",alterna:"A e B a fari alterni",chase:"una luce che corre",pingpong:"corre avanti e indietro",lati:"sinistra contro destra",onda:"sfumatura che scorre",arcobaleno:"tutti i colori",respiro:"si accende e spegne piano",casuale:"fari a caso",strobo:"lampi a tempo"};
   document.querySelectorAll(".fxprev button").forEach(b=>{ const l=b.textContent; b.innerHTML=`<span class="fxn">${l}</span><span class="dots">${"<i></i>".repeat(6)}</span><span class="fxd">${FXD[b.dataset.v]||""}</span>`; });
+  const MVD={fermo:"ferme al centro",cerchio:"girano in tondo",otto:"disegnano un 8",ventaglio:"destra e sinistra",onda:"su e giù",incrocio:"si incrociano",quadrato:"fanno un quadrato"};
+  document.querySelectorAll(".mvprev button").forEach(b=>{ const l=b.textContent; b.innerHTML=`<span class="fxn">${l}</span><svg viewBox="0 0 120 50" class="mv"><path class="tr"/><path class="tr"/><circle r="5"/><circle r="5"/></svg><span class="fxd">${MVD[b.dataset.v]||""}</span>`; });
+  const CMD={fisso:"tutte e due colore A",alterna:"A e B a turno",zone:"spicchi A e B",arcobaleno:"tutti i colori"};
+  document.querySelectorAll(".colprev button").forEach(b=>{ const l=b.textContent; b.innerHTML=`<span class="fxn">${l}</span><span class="hd">${'<span class="h2"><i></i><i></i><i></i></span>'.repeat(2)}</span><span class="fxd">${CMD[b.dataset.v]||""}</span>`; });
   document.querySelectorAll("[data-wheel]").forEach(makeWheel);
   document.querySelectorAll("[data-range]").forEach(inp=>{
     const path=inp.dataset.range;
