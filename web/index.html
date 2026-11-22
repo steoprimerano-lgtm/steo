@@ -12,7 +12,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
-body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);user-select:none;-webkit-user-select:none}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);overflow:hidden;user-select:none;-webkit-user-select:none}
 button{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;touch-action:manipulation}
 button:active{transform:scale(.97)}
 button.on{background:var(--acc);color:#111;border-color:var(--acc);font-weight:600}
@@ -23,24 +23,54 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;heigh
 input[type=range]::-moz-range-track{height:8px;border-radius:4px;background:var(--line)}
 input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--txt);border:3px solid var(--bg)}
 
-header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
-header h1{font-size:17px;margin:0 6px 0 0;white-space:nowrap}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+#showbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;flex:none}
+.big{padding:14px 18px;font-weight:700;font-size:15px;min-height:52px}
 .pill{font-size:12px;padding:4px 10px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);color:var(--sub);white-space:nowrap}
 .pill.live{color:var(--ok);border-color:var(--ok)}
-.hgroup{display:flex;align-items:center;gap:8px}
+.hgroup{display:flex;align-items:center;gap:6px}
 .master{display:flex;align-items:center;gap:8px;min-width:200px;flex:1}
-.master label{font-size:12px;color:var(--sub)}
-.bpm{font-variant-numeric:tabular-nums;min-width:62px;text-align:center;font-weight:600}
+.master label{font-size:12px;color:var(--sub);font-weight:600}
+.master .v{width:44px;font-size:13px;color:var(--sub);text-align:right}
+.bpm{font-variant-numeric:tabular-nums;min-width:66px;text-align:center;font-weight:700}
+#btnBlack{background:#3a1416;border-color:var(--red);color:#ffb3b3}
 #btnBlack.on{background:var(--red);border-color:var(--red);color:#fff}
-#btnFlash{background:#fff;color:#111;font-weight:700}
+#btnFlash{background:#f2f2f2;color:#111;border-color:#fff}
+#btnFlash.on{background:#fff;outline:3px solid var(--acc)}
+#btnFog{background:#26303a;border-color:#9fb4c8;color:#cfe0ef}
+#btnFog.on{background:#9fb4c8;color:#111}
+#btnTap{min-width:72px}
 
-nav{display:flex;gap:6px;padding:8px 14px 0}
-nav button{border-radius:10px 10px 0 0;border-bottom:none;padding:10px 20px}
-nav button.on{background:var(--panel);color:var(--txt);border-color:var(--line)}
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg)}
+main section{display:none;padding:14px 16px 24px;max-width:1200px;margin:0 auto}
+main section.show{display:block}
+.pagehead{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.pagehead h2{margin:0;font-size:22px;padding-left:12px;border-left:5px solid var(--gc,var(--acc))}
+.pagehead .sp{flex:1}
+.card h3{margin:0 0 10px;font-size:14px;color:var(--sub);text-transform:uppercase;letter-spacing:.05em}
+.g-par{--gc:#2ec4d6}
+.g-heads{--gc:#a58cff}
+#scene{--gc:var(--acc)}
+.g-par button.on,.g-par .chips button.on{background:var(--gc);border-color:var(--gc);color:#06262a}
+.g-heads button.on,.g-heads .chips button.on{background:var(--gc);border-color:var(--gc);color:#1b1240}
+.chips.fx{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.chips.fx button{padding:16px 8px;font-size:15px;font-weight:600}
+.split{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+.split2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:820px){.split,.split2{grid-template-columns:1fr}}
+.sliders{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px 14px}
+.presetgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.presetgrid .preset{min-height:104px;font-size:19px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;padding:14px 16px;border-width:2px}
+.presetgrid .preset.cur{background:var(--acc);color:#111;border-color:var(--acc);outline:none}
+.presetgrid .preset.cur small{color:#3a2a00}
+.fogcard{margin-top:20px}
 
-main{background:var(--panel);border-top:1px solid var(--line);min-height:calc(100vh - 120px)}
-section{display:none;padding:12px 14px}
-section.show{display:block}
+#tabs{display:grid;grid-template-columns:repeat(5,1fr);flex:none;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+#tabs button{background:none;border:0;border-radius:0;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;color:var(--sub)}
+#tabs button svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#tabs button.on{color:var(--acc);font-weight:700;box-shadow:inset 0 3px 0 var(--acc)}
+#tabs button[data-tab=par].on{color:#2ec4d6;box-shadow:inset 0 3px 0 #2ec4d6}
+#tabs button[data-tab=teste].on{color:#a58cff;box-shadow:inset 0 3px 0 #a58cff}
 
 .stagewrap{background:#07080b;border:1px solid var(--line);border-radius:12px;overflow:hidden;position:relative}
 .stagewrap svg{display:block;width:100%;height:auto}
@@ -65,8 +95,6 @@ section.show{display:block}
 .row .v{width:44px;text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:var(--sub)}
 .tog{min-width:64px}
 .fogrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-#btnFog{padding:16px 22px;font-weight:700}
-#btnFog.on{background:#9fb4c8;color:#111}
 .hint{font-size:12.5px;color:var(--sub);margin:8px 0 0}
 
 .edittools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
@@ -96,8 +124,9 @@ td input.num{width:72px}
 .preset .del{position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;line-height:24px;text-align:center;display:none}
 .editing .preset .del{display:block}
 
-.wheelbox{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.wheel{position:relative;width:230px;height:230px;border-radius:50%;touch-action:none;flex:none;
+.wheelbox{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:18px 6px 6px 18px}
+#cardHeads .wheel{width:min(230px,70vw);height:min(230px,70vw)}
+.wheel{position:relative;width:min(300px,80vw);height:min(300px,80vw);border-radius:50%;touch-action:none;flex:none;
  background:radial-gradient(closest-side,#fff 0%,rgba(255,255,255,.85) 12%,rgba(255,255,255,0) 100%),conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);
  box-shadow:0 0 0 6px #0b0d12,0 0 0 7px var(--line)}
 .wheel .h{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#111;pointer-events:none}
@@ -113,101 +142,105 @@ td input.num{width:72px}
 </style>
 </head>
 <body>
-<header>
-  <h1>💡 Centralina Luci</h1>
+<div id="app">
+<header id="showbar">
   <span id="status" class="pill">Simulazione</span>
-  <div class="master"><label>MASTER</label><input id="master" type="range" min="0" max="100" value="100"><span id="masterV" class="v" style="width:40px;font-size:13px;color:var(--sub)">100%</span></div>
-  <div class="hgroup">
+  <button id="btnBlack" class="big">BLACKOUT</button>
+  <button id="btnFlash" class="big" title="Tutti i PAR bianchi al massimo finché tieni premuto">FLASH</button>
+  <button id="btnFog" class="big" title="Fumo finché tieni premuto">FUMO</button>
+  <div class="hgroup bpmbox">
     <button id="bpmMinus">−</button><span class="bpm" id="bpmV">120 BPM</span><button id="bpmPlus">+</button>
-    <button id="btnTap">TAP</button>
+    <button id="btnTap" class="big">TAP</button>
   </div>
-  <div class="hgroup">
-    <button id="btnFlash" title="Tutti i PAR bianchi al massimo finché tieni premuto">FLASH PAR</button>
-    <button id="btnBlack">BLACKOUT</button>
-  </div>
+  <div class="master"><label>MASTER</label><input id="master" type="range" min="0" max="100" value="100"><span id="masterV" class="v">100%</span></div>
 </header>
-<nav>
-  <button data-tab="live" class="on">Live</button>
-  <button data-tab="palco">Palco</button>
-  <button data-tab="setup">Setup</button>
-</nav>
 <main>
-<!-- LIVE -->
-<section id="live" class="show">
-  <div class="card" id="cardPresets">
-    <h2>Preset <span class="sp"></span><button id="btnPresetEdit">Modifica</button><button id="btnPresetNew">+ Salva attuale</button></h2>
-    <div id="presetSave" hidden style="margin-bottom:10px">
-      <div class="row" style="flex-wrap:wrap">
-        <input id="presetName" placeholder="Nome (es. Ballad blu)" style="flex:1;min-width:180px">
-        <div class="chips" id="presetScope"><button data-v="tutto" class="on">PAR + teste</button><button data-v="par">Solo PAR</button><button data-v="heads">Solo teste</button></div>
-        <button id="presetOk" class="on">Salva</button><button id="presetCancel">Annulla</button>
-      </div>
+<!-- SCENE -->
+<section id="scene" class="show">
+  <div class="pagehead"><h2>Scene</h2><span class="sp"></span><button id="btnPresetEdit">Modifica</button><button id="btnPresetNew" class="on">+ Salva luci attuali</button></div>
+  <div id="presetSave" hidden class="card" style="margin-bottom:12px">
+    <div class="row" style="flex-wrap:wrap">
+      <input id="presetName" placeholder="Nome (es. Ballad blu)" style="flex:1;min-width:180px">
+      <div class="chips" id="presetScope"><button data-v="tutto" class="on">PAR + teste</button><button data-v="par">Solo PAR</button><button data-v="heads">Solo teste</button></div>
+      <button id="presetOk" class="on">Salva</button><button id="presetCancel">Annulla</button>
     </div>
-    <div class="chips" id="presetList"></div>
-    <p class="hint" id="presetEmpty">Nessun preset: imposta luci e movimenti, poi premi "+ Salva attuale".</p>
   </div>
-  <div class="cols">
-    <div class="card" id="cardPar">
-      <h2>PAR <span class="sp"></span><button class="tog" data-tog="par.on">ON</button></h2>
+  <div id="cardPresets"><div class="presetgrid" id="presetList"></div></div>
+  <p class="hint" id="presetEmpty">Nessuna scena salvata. Prepara luci e movimenti nelle pagine PAR e Teste, poi torna qui e premi "+ Salva luci attuali".</p>
+  <div class="card fogcard">
+    <h3>Fumo</h3>
+    <div class="fogrow">
+      <button id="btnFog5" class="big">Colpo 5 s</button>
+      <button class="tog big" data-tog="fog.auto">Automatico</button>
+      <div class="row" style="flex:1;min-width:220px"><span class="k">Ogni</span><input type="range" min="15" max="300" step="5" data-range="fog.every"><span class="v"></span></div>
+      <div class="row" style="flex:1;min-width:220px"><span class="k">Durata</span><input type="range" min="1" max="15" data-range="fog.len"><span class="v"></span></div>
+    </div>
+    <p class="hint">Per un colpo a mano tieni premuto FUMO in alto. Dopo l'accensione la macchina scalda 6–8 minuti.</p>
+  </div>
+</section>
+
+<!-- PAR -->
+<section id="par" class="g-par">
+  <div class="pagehead"><h2>PAR</h2><span class="sp"></span><button class="tog big" data-tog="par.on">ACCESI</button></div>
+  <div id="cardPar"><div class="split">
+    <div class="wheelbox" data-wheel="par"></div>
+    <div>
       <div class="lab">Gioco</div>
-      <div class="chips" data-chips="par.effect"></div>
-      <div class="lab">Colori</div>
-      <div class="wheelbox" data-wheel="par"></div>
-      <div class="row"><span class="k">Velocità</span><input type="range" min="0" max="100" data-range="par.speed"><span class="v"></span></div>
-      <div class="row"><span class="k">Intensità</span><input type="range" min="0" max="100" data-range="par.dim"><span class="v"></span></div>
-      <div class="row"><span class="k">Strobo</span><input type="range" min="0" max="100" data-range="par.strobe"><span class="v"></span></div>
-      <div class="row" style="margin-top:6px;flex-wrap:wrap">
+      <div class="chips fx" data-chips="par.effect"></div>
+      <div class="row" style="margin-top:12px;flex-wrap:wrap">
         <button class="tog" data-tog="par.sync">A tempo (BPM)</button>
         <button class="tog" data-tog="par.smooth">Morbido</button>
       </div>
     </div>
-    <div class="card" id="cardHeads">
-      <h2>Teste mobili <span class="sp"></span><button class="tog" data-tog="heads.on">ON</button></h2>
-      <div class="row" style="flex-wrap:wrap">
-        <button id="btnPoint">🎯 Puntamento</button>
-        <button class="tog" data-tog="heads.home">⌂ Posizione iniziale</button>
+  </div>
+  <div class="sliders">
+    <div class="row"><span class="k">Velocità</span><input type="range" min="0" max="100" data-range="par.speed"><span class="v"></span></div>
+    <div class="row"><span class="k">Intensità</span><input type="range" min="0" max="100" data-range="par.dim"><span class="v"></span></div>
+    <div class="row"><span class="k">Strobo</span><input type="range" min="0" max="100" data-range="par.strobe"><span class="v"></span></div>
+  </div></div>
+</section>
+
+<!-- TESTE -->
+<section id="teste" class="g-heads">
+  <div class="pagehead"><h2>Teste mobili</h2><span class="sp"></span>
+    <button id="btnPoint">🎯 Punta</button>
+    <button class="tog" data-tog="heads.home">⌂ Posizione iniziale</button>
+    <button class="tog big" data-tog="heads.on">ACCESE</button></div>
+  <div class="pointbox" id="pointBox" hidden>
+    <div class="chips" id="pointWho"></div>
+    <div class="xy" id="xyPad"><span class="ax" style="left:6px;top:4px">tilt ↑</span><span class="ax" style="right:6px;bottom:4px">pan →</span></div>
+    <div class="row" style="flex-wrap:wrap;align-items:flex-start">
+      <div class="arrows"><span></span><button data-nud="0,1">▲</button><span></span><button data-nud="-1,0">◀</button><button id="btnFine" class="tog">fine</button><button data-nud="1,0">▶</button><span></span><button data-nud="0,-1">▼</button><span></span></div>
+      <div style="flex:1;min-width:180px">
+        <p class="hint" style="margin-top:0">Le teste si fermano in luce bianca. Trascina nel riquadro o usa le frecce: quel punto diventa la <b>posizione iniziale</b>, il centro dei movimenti.</p>
+        <button id="pointDone" class="on big">Fatto</button>
       </div>
-      <div class="pointbox" id="pointBox" hidden>
-        <div class="chips" id="pointWho"></div>
-        <div class="xy" id="xyPad"><span class="ax" style="left:6px;top:4px">tilt ↑</span><span class="ax" style="right:6px;bottom:4px">pan →</span></div>
-        <div class="row" style="flex-wrap:wrap;align-items:flex-start">
-          <div class="arrows"><span></span><button data-nud="0,1">▲</button><span></span><button data-nud="-1,0">◀</button><button id="btnFine" class="tog">fine</button><button data-nud="1,0">▶</button><span></span><button data-nud="0,-1">▼</button><span></span></div>
-          <div style="flex:1;min-width:180px">
-            <p class="hint" style="margin-top:0">Le teste si fermano in luce bianca. Trascina nel riquadro (o usa le frecce) per puntarle: quella diventa la <b>posizione iniziale</b>, cioè il centro dei movimenti. Con "Entrambe" e Specchio attivo la DX si muove a specchio.</p>
-            <button id="pointDone" class="on">Fatto</button>
-          </div>
-        </div>
-      </div>
-      <div class="lab">Movimento</div>
-      <div class="chips" data-chips="heads.move"></div>
-      <div class="row" style="margin-top:8px;flex-wrap:wrap">
-        <button class="tog" data-tog="heads.mirror">Specchio</button>
-      </div>
-      <div class="row"><span class="k">Sfasamento</span><input type="range" min="0" max="100" data-range="heads.phase"><span class="v"></span></div>
+    </div>
+  </div>
+  <div id="cardHeads"><div class="split2">
+    <div class="card">
+      <h3>Movimento</h3>
+      <div class="chips fx" data-chips="heads.move"></div>
+      <div class="row" style="margin-top:8px"><button class="tog" data-tog="heads.mirror">Specchio</button></div>
+      <div class="row"><span class="k">Velocità</span><input type="range" min="0" max="100" data-range="heads.speed"><span class="v"></span></div>
       <div class="row"><span class="k">Ampiezza</span><input type="range" min="0" max="100" data-range="heads.size"><span class="v"></span></div>
-      <div class="row"><span class="k">Velocità mov.</span><input type="range" min="0" max="100" data-range="heads.speed"><span class="v"></span></div>
-      <div class="lab">Colore</div>
-      <div class="chips" data-chips="heads.colMode"></div>
-      <div class="row" style="margin-top:6px"><span class="k">Velocità colori</span><input type="range" min="0" max="100" data-range="heads.colSpeed"><span class="v"></span><button class="tog" data-tog="heads.sync">A tempo (BPM)</button></div>
+      <div class="row"><span class="k">Sfasamento</span><input type="range" min="0" max="100" data-range="heads.phase"><span class="v"></span></div>
+    </div>
+    <div class="card">
+      <h3>Colore</h3>
+      <div class="chips fx" data-chips="heads.colMode"></div>
+      <div class="row" style="margin-top:6px"><span class="k">Velocità</span><input type="range" min="0" max="100" data-range="heads.colSpeed"><span class="v"></span><button class="tog" data-tog="heads.sync">BPM</button></div>
       <div class="wheelbox" data-wheel="heads" style="margin-top:8px"></div>
-      <div class="row"><span class="k">Intensità</span><input type="range" min="0" max="100" data-range="heads.dim"><span class="v"></span></div>
-      <div class="row"><span class="k">Zoom</span><input type="range" min="0" max="100" data-range="heads.zoom"><span class="v"></span></div>
-      <div class="row"><span class="k">Strobo</span><input type="range" min="0" max="100" data-range="heads.strobe"><span class="v"></span></div>
-      <div class="lab">Anello LED</div>
-      <div class="chips" data-chips="heads.ring"></div>
     </div>
   </div>
   <div class="card" style="margin-top:12px">
-    <h2>Macchina del fumo</h2>
-    <div class="fogrow">
-      <button id="btnFog">TIENI PREMUTO = FUMO</button>
-      <button id="btnFog5">Colpo 5 s</button>
-      <button class="tog" data-tog="fog.auto">Automatico</button>
-      <div class="row" style="flex:1;min-width:240px"><span class="k">Ogni</span><input type="range" min="15" max="300" step="5" data-range="fog.every"><span class="v"></span></div>
-      <div class="row" style="flex:1;min-width:240px"><span class="k">Durata</span><input type="range" min="1" max="15" data-range="fog.len"><span class="v"></span></div>
-    </div>
-    <p class="hint">Dopo l'accensione la macchina scalda per 6–8 minuti: prima non risponde ai comandi.</p>
-  </div>
+    <h3>Fascio e anello</h3>
+    <div class="row"><span class="k">Intensità</span><input type="range" min="0" max="100" data-range="heads.dim"><span class="v"></span></div>
+    <div class="row"><span class="k">Zoom</span><input type="range" min="0" max="100" data-range="heads.zoom"><span class="v"></span></div>
+    <div class="row"><span class="k">Strobo</span><input type="range" min="0" max="100" data-range="heads.strobe"><span class="v"></span></div>
+    <div class="lab">Anello LED</div>
+    <div class="chips" data-chips="heads.ring"></div>
+  </div></div>
 </section>
 
 <!-- PALCO -->
@@ -219,7 +252,7 @@ td input.num{width:72px}
     <label class="row" style="gap:6px">Profondità <input id="stD" type="number" min="2" max="15" step="0.5" style="width:70px"> m</label>
     <button id="btnResetLayout">Disposizione iniziale</button>
   </div>
-  <div class="row" style="flex-wrap:wrap;margin-bottom:10px"><span class="k" style="width:auto">Prova preset:</span><div class="chips" id="presetList2"></div></div>
+  <div class="row" style="flex-wrap:wrap;margin-bottom:10px"><span class="k" style="width:auto">Prova scena:</span><div class="chips" id="presetList2"></div></div>
   <div class="stagewrap"><svg id="svgEdit"></svg></div>
   <p class="hint">Il pubblico è in basso. L'ordine sinistra→destra dei PAR sul palco decide il verso dei giochi (chase, onda, lati).</p>
 </section>
@@ -255,7 +288,7 @@ td input.num{width:72px}
   </div>
   <div class="card" style="margin-top:12px">
     <h2>Teste mobili: posizione iniziale e inversione</h2>
-    <p class="hint" style="margin-top:0">Il puntamento rapido è nella scheda Live (🎯). Qui puoi rifinire i valori o invertire il pan di una testa montata al contrario.</p>
+    <p class="hint" style="margin-top:0">Il puntamento rapido è nella pagina Teste (🎯 Punta). Qui puoi rifinire i valori o invertire il pan di una testa montata al contrario.</p>
     <div class="calib" id="calibBox"></div>
   </div>
   <div class="card" style="margin-top:12px">
@@ -273,6 +306,14 @@ td input.num{width:72px}
   </div>
 </section>
 </main>
+<nav id="tabs">
+  <button data-tab="scene" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Scene</button>
+  <button data-tab="par"><svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="6"/><path d="M9 19h6M10 22h4"/></svg>PAR</button>
+  <button data-tab="teste"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Teste</button>
+  <button data-tab="palco"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M7 21h10M12 17v4"/></svg>Palco</button>
+  <button data-tab="setup"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Setup</button>
+</nav>
+</div>
 
 <script>
 "use strict";
@@ -584,7 +625,7 @@ function applyRemote(d){
   const ip=document.getElementById("netIp"), un=document.getElementById("netUni"); if(ip){ ip.value=net.ip; un.value=net.uni; }
   applying=false;
 }
-function setStatus(live){ const el=document.getElementById("status"); el.textContent=live?"Centralina collegata":"Simulazione"; el.classList.toggle("live",live); }
+function setStatus(live){ const el=document.getElementById("status"); el.textContent=live?"● Collegata":"Simulazione"; el.classList.toggle("live",live); }
 let shutArm=false;
 function renderCentral(){
   const box=document.getElementById("centralBox"); if(!box) return;
@@ -712,14 +753,14 @@ function enableDrag(svg){
 }
 
 /* ================= INTERFACCIA ================= */
-let curTab="live";
+let curTab="scene";
 function showTab(t){
   curTab=t;
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
-  document.querySelectorAll("section").forEach(s=>s.classList.toggle("show",s.id===t));
+  document.querySelectorAll("main section").forEach(s=>s.classList.toggle("show",s.id===t)); document.querySelector("main").scrollTop=0;
   if(t==="palco"){ editBuilt=false; document.getElementById("stW").value=stage.w; document.getElementById("stD").value=stage.d; }
   if(t==="setup") renderSetup();
-  if(t==="live") liveBuilt=false;
+  
   if(location.hash.slice(1)!==t){ try{ history.replaceState(null,"","#"+t);}catch(e){} }
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
@@ -881,7 +922,7 @@ function renderPresets(){
     box.appendChild(b);
   });
   const box2=document.getElementById("presetList2");
-  if(box2){ box2.innerHTML=presets.length?"":'<span class="hint" style="margin:0">nessun preset salvato</span>';
+  if(box2){ box2.innerHTML=presets.length?"":'<span class="hint" style="margin:0">nessuna scena salvata</span>';
     presets.forEach((p,i)=>{ const b=document.createElement("button"); b.textContent=p.name; b.classList.toggle("on",curPreset===i);
       b.onclick=()=>{ if(p.par) Object.assign(S.par,{colC:""},clone(p.par)); if(p.heads){ const h=S.heads.home; Object.assign(S.heads,clone(p.heads)); S.heads.home=h; } curPreset=i; save(); refreshUI(); };
       box2.appendChild(b); }); }
@@ -1136,8 +1177,8 @@ function drawMonitor(){
 /* ================= AVVIO ================= */
 load(); bindUI(); bindPoint(); bindPresets(); refreshUI(); renderCentral(); connect();
 if(NATIVE){ const st=document.getElementById("status"); st.textContent="App iPad · Art-Net diretto"; st.classList.add("live"); }
-const h0=location.hash.slice(1); showTab(["live","palco","setup"].includes(h0)?h0:"live");
-window.addEventListener("hashchange",()=>{ const h=location.hash.slice(1); if(["live","palco","setup"].includes(h)&&h!==curTab) showTab(h); });
+const TABS=["scene","par","teste","palco","setup"]; const h0=location.hash.slice(1); showTab(TABS.includes(h0)?h0:"scene");
+window.addEventListener("hashchange",()=>{ const h=location.hash.slice(1); if(TABS.includes(h)&&h!==curTab) showTab(h); });
 requestAnimationFrame(tick);
 </script>
 </body>
