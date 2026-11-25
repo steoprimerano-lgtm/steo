@@ -44,24 +44,34 @@ echo "== 4/5 Indirizzo fisso per la rete del nodo ($IP_NODO)"
 IFACE=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^(eth|end|enp)' | head -1)
 [ -z "$IFACE" ] && IFACE="eth0"
 echo "   Scheda di rete: $IFACE"
-cat > /etc/systemd/system/centralina-ip.service <<EOF
-[Unit]
-Description=Indirizzo 2.x per il nodo Art-Net
-After=network.target
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/bin/sh -c 'for i in \$(seq 1 30); do ip link show $IFACE >/dev/null 2>&1 && break; sleep 1; done; ip addr add $IP_NODO dev $IFACE 2>/dev/null || true'
-[Install]
-WantedBy=multi-user.target
-EOF
+# toglie la vecchia versione (bloccava la rete al riavvio)
+if [ -f /etc/systemd/system/centralina-ip.service ]; then
+  systemctl disable centralina-ip.service >/dev/null 2>&1 || true
+  rm -f /etc/systemd/system/centralina-ip.service
+fi
+RELOAD_NET=""
+if command -v nmcli >/dev/null && systemctl is-active --quiet NetworkManager; then
+  CON=$(nmcli -t -f NAME,DEVICE con show --active | awk -F: -v d="$IFACE" '$2==d{print $1; exit}')
+  [ -z "$CON" ] && CON=$(nmcli -t -f NAME,TYPE con show | awk -F: '$2=="802-3-ethernet"{print $1; exit}')
+  if [ -z "$CON" ]; then nmcli con add type ethernet ifname "$IFACE" con-name centralina >/dev/null; CON="centralina"; fi
+  nmcli con mod "$CON" ipv4.method auto connection.autoconnect yes
+  nmcli con mod "$CON" -ipv4.addresses "$IP_NODO" >/dev/null 2>&1 || true
+  nmcli con mod "$CON" +ipv4.addresses "$IP_NODO"
+  echo "   Aggiunto alla connessione \"$CON\" (DHCP di casa + $IP_NODO)"
+  RELOAD_NET="$CON"
+else
+  # sistemi senza NetworkManager: alias in /etc/network/interfaces.d
+  mkdir -p /etc/network/interfaces.d
+  printf "auto %s\nallow-hotplug %s\niface %s inet dhcp\n    up ip addr add %s dev %s || true\n" "$IFACE" "$IFACE" "$IFACE" "$IP_NODO" "$IFACE" > /etc/network/interfaces.d/centralina
+  ip link set "$IFACE" up; ip addr add "$IP_NODO" dev "$IFACE" 2>/dev/null || true
+  echo "   Configurato in /etc/network/interfaces.d/centralina"
+fi
 
 echo "== 5/5 Avvio automatico"
 cat > /etc/systemd/system/centralina.service <<EOF
 [Unit]
 Description=Centralina luci
-After=network.target centralina-ip.service
-Wants=centralina-ip.service
+After=network.target
 [Service]
 Environment=PORT=80
 WorkingDirectory=$DEST/centralina
@@ -72,7 +82,6 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
-systemctl enable --now centralina-ip.service >/dev/null 2>&1
 systemctl enable centralina.service >/dev/null 2>&1
 systemctl restart centralina.service
 sleep 3
@@ -82,8 +91,12 @@ if systemctl is-active --quiet centralina.service; then
   echo "==================================================="
   echo " FATTO! La centralina parte da sola a ogni accensione."
   echo " Dal browser apri:"
-  for a in $(hostname -I); do echo "   http://$a"; done
+  for a in $(hostname -I) 2.0.0.2; do echo "   http://$a"; done
   echo "==================================================="
+  if [ -n "$RELOAD_NET" ]; then
+    echo " Applico la rete: se la finestra si blocca, aspetta 10 secondi e ricollegati."
+    (sleep 2; nmcli con up "$RELOAD_NET" >/dev/null 2>&1) &
+  fi
 else
   echo "Qualcosa non va. Ultime righe del registro:"
   journalctl -u centralina.service -n 20 --no-pager
