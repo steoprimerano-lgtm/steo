@@ -28,6 +28,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .big{padding:14px 18px;font-weight:700;font-size:15px;min-height:52px}
 .pill{font-size:12px;padding:4px 10px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);color:var(--sub);white-space:nowrap}
 .pill.live{color:var(--ok);border-color:var(--ok)}
+.pill.lost{color:#ff8a8a;border-color:var(--red)}
 .hgroup{display:flex;align-items:center;gap:6px}
 .master{display:flex;align-items:center;gap:8px;min-width:200px;flex:1}
 .master label{font-size:12px;color:var(--sub);font-weight:600}
@@ -678,22 +679,39 @@ async function libGet(man,file){ return LIB.parseQxf(await fetchText(LIB.url(man
 /* ================= COLLEGAMENTO CENTRALINA ================= */
 // Quando l'app è aperta dalla centralina (Raspberry o computer) gli effetti li calcola la centralina,
 // che manda l'Art-Net al nodo. L'app manda le modifiche e riceve quelle fatte da altri dispositivi.
-let ws=null, applying=false, syncT=null, central=null;
+let ws=null, applying=false, syncT=null, central=null, wsGen=0, pingT=null, retryT=null;
+function canCentral(){ const h=location.hostname||""; return /^https?:$/.test(location.protocol) && !!h && !/claude|anthropic|usercontent/.test(h); }
 function connect(){
-  const h=location.hostname||"";
-  if(!/^https?:$/.test(location.protocol) || /claude|anthropic|usercontent/.test(h) || !h) return;
+  if(!canCentral()) return;
+  clearTimeout(retryT); clearTimeout(pingT);
+  const gen=++wsGen;
+  if(ws){ try{ ws.onclose=null; ws.close(); }catch(e){} }
   try{
     ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");
-    ws.onopen=()=>{ setStatus(true); };
-    ws.onclose=()=>{ setStatus(false); central=null; renderCentral(); setTimeout(connect,2000); };
+    ws.onopen=()=>{ if(gen!==wsGen) return; setStatus(true); };
+    ws.onclose=()=>{ if(gen!==wsGen) return; setStatus(false); central=null; renderCentral(); retryT=setTimeout(connect,1500); };
     ws.onerror=()=>{};
-    ws.onmessage=e=>{ let m; try{ m=JSON.parse(e.data); }catch(x){ return; }
+    ws.onmessage=e=>{ if(gen!==wsGen) return; clearTimeout(pingT); let m; try{ m=JSON.parse(e.data); }catch(x){ return; }
       if(m.type==="need") sendNow();
       else if(m.type==="state") applyRemote(m.data);
       else if(m.type==="info"){ central=m; renderCentral(); }
     };
-  }catch(e){}
+  }catch(e){ retryT=setTimeout(connect,1500); }
 }
+// controlla che il collegamento sia vivo: su iPad, dopo aver chiuso e riaperto l'app, il collegamento può restare "appeso"
+function checkConn(){
+  if(!canCentral() || document.visibilityState!=="visible") return;
+  if(!ws || ws.readyState>1){ connect(); return; }
+  if(ws.readyState!==1) return;
+  clearTimeout(pingT);
+  try{ ws.send(JSON.stringify({type:"ping"})); }catch(e){ connect(); return; }
+  pingT=setTimeout(()=>{ setStatus(false); connect(); },2500);
+}
+document.addEventListener("visibilitychange",checkConn);
+window.addEventListener("pageshow",checkConn);
+window.addEventListener("focus",checkConn);
+window.addEventListener("online",checkConn);
+setInterval(checkConn,5000);
 function snapshot(){ return {fixtures,decor,stage,net,state:S,presets,profiles}; }
 function sendNow(){ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:"state",data:snapshot()})); }
 function syncSoon(){ if(applying||!ws||ws.readyState!==1) return; clearTimeout(syncT); syncT=setTimeout(sendNow,40); }
@@ -707,7 +725,7 @@ function applyRemote(d){
   const ip=document.getElementById("netIp"), un=document.getElementById("netUni"); if(ip){ ip.value=net.ip; un.value=net.uni; }
   applying=false;
 }
-function setStatus(live){ const el=document.getElementById("status"); el.textContent=live?"● Collegata":"Simulazione"; el.classList.toggle("live",live); }
+function setStatus(live){ const el=document.getElementById("status"); el.textContent=live?"● Collegata":(canCentral()?"Ricollego…":"Simulazione"); el.classList.toggle("live",live); el.classList.toggle("lost",!live&&canCentral()); }
 let shutArm=false;
 function renderCentral(){
   const box=document.getElementById("centralBox"); if(!box) return;

@@ -115,6 +115,7 @@ function onMessage(sock, txt) {
     for (const c of clients) if (c !== sock) wsSend(c, { type: "state", data });
   } else if (m.type === "mom") engine.mom(m);
   else if (m.type === "tap") engine.tap();
+  else if (m.type === "ping") wsSend(sock, { type: "pong" });
   else if (m.type === "shutdown" && process.platform === "linux") {
     console.log("Spegnimento richiesto dall'app");
     exec("sudo shutdown -h now", err => { if (err) console.log("Spegnimento non riuscito:", err.message); });
