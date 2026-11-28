@@ -680,16 +680,21 @@ async function libGet(man,file){ return LIB.parseQxf(await fetchText(LIB.url(man
 // Quando l'app è aperta dalla centralina (Raspberry o computer) gli effetti li calcola la centralina,
 // che manda l'Art-Net al nodo. L'app manda le modifiche e riceve quelle fatte da altri dispositivi.
 let updState=null, updArm=false;
-let ws=null, applying=false, syncT=null, central=null, wsGen=0, pingT=null, retryT=null;
+let ws=null, applying=false, syncT=null, central=null, wsGen=0, pingT=null, retryT=null, openT=null;
+// "http" = collegamento di riserva con richieste normali (usato quando l'iPad blocca il WebSocket, es. app sulla Home)
+let mode="ws", pollV=-1, pollT=null, pollBusy=false, pollDown=false;
+const CID=Math.random().toString(36).slice(2,10);
 function canCentral(){ const h=location.hostname||""; return /^https?:$/.test(location.protocol) && !!h && !/claude|anthropic|usercontent/.test(h); }
+function updDone(){ if(updState&&updState.ok===null&&String(updState.msg).startsWith("Installo")){ updState={ok:true,msg:"✓ Centralina aggiornata e ripartita."}; renderCentral(); } }
 function connect(){
-  if(!canCentral()) return;
-  clearTimeout(retryT); clearTimeout(pingT);
+  if(!canCentral() || mode==="http") return;
+  clearTimeout(retryT); clearTimeout(pingT); clearTimeout(openT);
   const gen=++wsGen;
   if(ws){ try{ ws.onclose=null; ws.close(); }catch(e){} }
   try{
     ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");
-    ws.onopen=()=>{ if(gen!==wsGen) return; setStatus(true); if(updState&&updState.ok===null&&updState.msg.startsWith("Installo")){ updState={ok:true,msg:"✓ Centralina aggiornata e ripartita."}; renderCentral(); } };
+    openT=setTimeout(()=>{ if(gen===wsGen && (!ws||ws.readyState!==1)) startHttp(); },3000);
+    ws.onopen=()=>{ if(gen!==wsGen) return; clearTimeout(openT); setStatus(true); updDone(); };
     ws.onclose=()=>{ if(gen!==wsGen) return; setStatus(false); central=null; renderCentral(); retryT=setTimeout(connect,1500); };
     ws.onerror=()=>{};
     ws.onmessage=e=>{ if(gen!==wsGen) return; clearTimeout(pingT); let m; try{ m=JSON.parse(e.data); }catch(x){ return; }
@@ -698,11 +703,30 @@ function connect(){
       else if(m.type==="info"){ central=m; renderCentral(); }
       else if(m.type==="upd"){ updState=m; renderCentral(); }
     };
-  }catch(e){ retryT=setTimeout(connect,1500); }
+  }catch(e){ startHttp(); }
 }
+function startHttp(){
+  if(mode==="http") return;
+  mode="http"; wsGen++; clearTimeout(retryT); clearTimeout(pingT); clearTimeout(openT);
+  if(ws){ try{ ws.onclose=null; ws.close(); }catch(e){} ws=null; }
+  poll(); pollT=setInterval(poll,800);
+}
+function poll(){
+  if(pollBusy || document.visibilityState!=="visible") return; pollBusy=true;
+  const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),3000);
+  fetch("/api/poll?id="+CID+"&v="+pollV,{cache:"no-store",signal:ctl.signal}).then(r=>r.json()).then(j=>{
+    setStatus(true); if(pollDown){ pollDown=false; updDone(); }
+    if(!central || central.clients!==j.info.clients || central.host!==j.info.host){ central=j.info; renderCentral(); }
+    if(j.upd && (!updState || updState.t!==j.upd.t)){ updState=j.upd; renderCentral(); }
+    if(j.need) sendNow(); else if(j.data) applyRemote(j.data);
+    pollV=j.v;
+  }).catch(()=>{ pollDown=true; setStatus(false); }).finally(()=>{ clearTimeout(to); pollBusy=false; });
+}
+function post(m){ return fetch("/api/msg?id="+CID,{method:"POST",cache:"no-store",headers:{"Content-Type":"text/plain"},body:JSON.stringify(m)}).then(r=>r.json()).then(j=>{ if(m.type==="state") pollV=j.v; }).catch(()=>{}); }
 // controlla che il collegamento sia vivo: su iPad, dopo aver chiuso e riaperto l'app, il collegamento può restare "appeso"
 function checkConn(){
   if(!canCentral() || document.visibilityState!=="visible") return;
+  if(mode==="http"){ poll(); return; }
   if(!ws || ws.readyState>1){ connect(); return; }
   if(ws.readyState!==1) return;
   clearTimeout(pingT);
@@ -715,9 +739,10 @@ window.addEventListener("focus",checkConn);
 window.addEventListener("online",checkConn);
 setInterval(checkConn,5000);
 function snapshot(){ return {fixtures,decor,stage,net,state:S,presets,profiles}; }
-function sendNow(){ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:"state",data:snapshot()})); }
-function syncSoon(){ if(applying||!ws||ws.readyState!==1) return; clearTimeout(syncT); syncT=setTimeout(sendNow,40); }
-function sendMsg(m){ if(ws&&ws.readyState===1) ws.send(JSON.stringify(m)); }
+function linkUp(){ return mode==="http" || (ws&&ws.readyState===1); }
+function sendNow(){ const m={type:"state",data:snapshot()}; if(mode==="http") post(m); else if(ws&&ws.readyState===1) ws.send(JSON.stringify(m)); }
+function syncSoon(){ if(applying||!linkUp()) return; clearTimeout(syncT); syncT=setTimeout(sendNow,mode==="http"?80:40); }
+function sendMsg(m){ if(mode==="http") post(m); else if(ws&&ws.readyState===1) ws.send(JSON.stringify(m)); }
 function applyRemote(d){
   applying=true;
   registerProfiles(d.profiles||[]); fixtures=d.fixtures; decor=d.decor; stage=d.stage; net=d.net; presets=d.presets||[];
@@ -1288,7 +1313,7 @@ function drawMonitor(){
 }
 
 /* ================= AVVIO ================= */
-load(); bindUI(); bindPoint(); bindPresets(); refreshUI(); renderCentral(); connect();
+load(); bindUI(); bindPoint(); bindPresets(); refreshUI(); renderCentral(); if(canCentral()) document.getElementById("status").textContent="Collego…"; connect();
 if(NATIVE){ const st=document.getElementById("status"); st.textContent="App iPad · Art-Net diretto"; st.classList.add("live"); }
 const TABS=["scene","par","teste","palco","setup"]; const h0=location.hash.slice(1); showTab(TABS.includes(h0)?h0:"scene");
 window.addEventListener("hashchange",()=>{ const h=location.hash.slice(1); if(TABS.includes(h)&&h!==curTab) showTab(h); });

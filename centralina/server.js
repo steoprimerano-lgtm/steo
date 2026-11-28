@@ -85,6 +85,19 @@ const server = http.createServer((req, res) => {
   if (u.pathname === "/api/lib/get") {
     return libreria.getFixture(u.searchParams.get("man") || "", u.searchParams.get("file") || "").then(r => sendJson(res, 200, r), e => sendJson(res, 502, { error: e.message }));
   }
+  if (u.pathname === "/api/poll") {
+    const id = u.searchParams.get("id") || "?"; httpSeen.set(id, Date.now());
+    const v = Number(u.searchParams.get("v") || -1);
+    const out = { v: ver, info: info(), upd: lastUpd };
+    if (!data) out.need = true;
+    else if (v !== ver && lastWriter !== id) out.data = data;
+    return sendJson(res, 200, out);
+  }
+  if (u.pathname === "/api/msg" && req.method === "POST") {
+    let body = ""; req.on("data", c => { body += c; if (body.length > 5e6) req.destroy(); });
+    req.on("end", () => { const id = u.searchParams.get("id") || "?"; httpSeen.set(id, Date.now()); onMessage(null, body, id); sendJson(res, 200, { ok: true, v: ver }); });
+    return;
+  }
   if (req.url === "/" || req.url.startsWith("/?") || req.url === "/index.html") {
     fs.readFile(HTML_FILE, (err, buf) => {
       if (err) { res.writeHead(500); return res.end("index.html mancante"); }
@@ -105,7 +118,11 @@ function wsSend(sock, obj) {
   else { head = Buffer.alloc(10); head[0] = 0x81; head[1] = 127; head.writeBigUInt64BE(BigInt(len), 2); }
   try { sock.write(Buffer.concat([head, payload])); } catch (e) {}
 }
-function info() { return { type: "info", host: os.hostname(), clients: clients.size, canShutdown: process.platform === "linux" }; }
+// dispositivi collegati senza WebSocket (es. app sulla Home dell'iPad): interrogano /api/poll
+const httpSeen = new Map();
+let ver = 0, lastWriter = null, lastUpd = null;
+function httpCount() { const now = Date.now(); let n = 0; for (const [k, t] of httpSeen) { if (now - t < 6000) n++; else httpSeen.delete(k); } return n; }
+function info() { return { type: "info", host: os.hostname(), clients: clients.size + httpCount(), canShutdown: process.platform === "linux" }; }
 function broadcastInfo() { for (const c of clients) wsSend(c, info()); }
 
 // guardia della rete: se il router non dà indirizzi automatici, il gestore di rete spegne la scheda
@@ -124,7 +141,7 @@ if (process.platform === "linux" && IP_NODO && IFACE) {
 // aggiornamento dall'app: scarica e rilancia lo script di installazione (serve internet)
 const UPDATE_URL = "https://raw.githubusercontent.com/steoprimerano-lgtm/steo/main/centralina/installa-rock.sh";
 let updating = false;
-function updMsg(ok, msg) { for (const c of clients) wsSend(c, { type: "upd", ok, msg }); }
+function updMsg(ok, msg) { lastUpd = { ok, msg, t: Date.now() }; for (const c of clients) wsSend(c, { type: "upd", ok, msg }); }
 function updateSelf() {
   if (updating) return; updating = true;
   updMsg(null, "Scarico l'aggiornamento…");
@@ -139,14 +156,14 @@ function updateSelf() {
   });
 }
 
-function onMessage(sock, txt) {
+function onMessage(sock, txt, httpId) {
   let m; try { m = JSON.parse(txt); } catch (e) { return; }
   if (m.type === "state" && m.data && Array.isArray(m.data.fixtures)) {
-    data = m.data; engine.apply(data); saveData();
+    data = m.data; engine.apply(data); saveData(); ver++; lastWriter = httpId || null;
     for (const c of clients) if (c !== sock) wsSend(c, { type: "state", data });
   } else if (m.type === "mom") engine.mom(m);
   else if (m.type === "tap") engine.tap();
-  else if (m.type === "ping") wsSend(sock, { type: "pong" });
+  else if (m.type === "ping") { if (sock) wsSend(sock, { type: "pong" }); }
   else if (m.type === "update" && process.platform === "linux") updateSelf();
   else if (m.type === "shutdown" && process.platform === "linux") {
     console.log("Spegnimento richiesto dall'app");
