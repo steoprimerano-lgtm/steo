@@ -55,12 +55,12 @@ if command -v nmcli >/dev/null && systemctl is-active --quiet NetworkManager; th
   CON=$(nmcli -t -f NAME,DEVICE con show --active | awk -F: -v d="$IFACE" '$2==d && $1!="centralina-luci"{print $1; exit}')
   [ -z "$CON" ] && CON=$(nmcli -t -f NAME,TYPE con show | awk -F: '$2=="802-3-ethernet" && $1!="centralina-luci"{print $1; exit}')
   if [ -z "$CON" ]; then nmcli con add type ethernet ifname "$IFACE" con-name centralina >/dev/null; CON="centralina"; fi
-  nmcli con mod "$CON" ipv4.method auto connection.autoconnect yes connection.autoconnect-priority 10 connection.autoconnect-retries 1 ipv4.dhcp-timeout 20
+  nmcli con mod "$CON" ipv4.method auto connection.autoconnect yes connection.autoconnect-priority 0 connection.autoconnect-retries -1 ipv4.dhcp-timeout 0
   nmcli con mod "$CON" -ipv4.addresses "$IP_NODO" >/dev/null 2>&1 || true
   nmcli con mod "$CON" +ipv4.addresses "$IP_NODO"
+  # il router delle luci dà indirizzi automatici: basta un solo profilo (DHCP + 2.0.0.2)
   nmcli con delete centralina-luci >/dev/null 2>&1 || true
-  nmcli con add type ethernet ifname "$IFACE" con-name centralina-luci ipv4.method manual ipv4.addresses "$IP_NODO" ipv6.method ignore connection.autoconnect yes connection.autoconnect-priority 0 >/dev/null
-  echo "   Profilo casa \"$CON\" (DHCP + $IP_NODO) e profilo luci \"centralina-luci\" ($IP_NODO fisso)"
+  echo "   Connessione \"$CON\": indirizzo automatico + $IP_NODO"
   RELOAD_NET=""
 else
   # sistemi senza NetworkManager: alias in /etc/network/interfaces.d
@@ -77,8 +77,6 @@ Description=Centralina luci
 After=network.target
 [Service]
 Environment=PORT=80
-Environment=IP_NODO=$IP_NODO
-Environment=IFACE=$IFACE
 WorkingDirectory=$DEST/centralina
 ExecStart=/usr/local/bin/node $DEST/centralina/server.js
 Restart=always
