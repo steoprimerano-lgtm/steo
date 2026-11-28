@@ -689,7 +689,7 @@ function connect(){
   if(ws){ try{ ws.onclose=null; ws.close(); }catch(e){} }
   try{
     ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");
-    ws.onopen=()=>{ if(gen!==wsGen) return; setStatus(true); };
+    ws.onopen=()=>{ if(gen!==wsGen) return; setStatus(true); if(updState&&updState.ok===null&&updState.msg.startsWith("Installo")){ updState={ok:true,msg:"✓ Centralina aggiornata e ripartita."}; renderCentral(); } };
     ws.onclose=()=>{ if(gen!==wsGen) return; setStatus(false); central=null; renderCentral(); retryT=setTimeout(connect,1500); };
     ws.onerror=()=>{};
     ws.onmessage=e=>{ if(gen!==wsGen) return; clearTimeout(pingT); let m; try{ m=JSON.parse(e.data); }catch(x){ return; }
