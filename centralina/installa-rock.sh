@@ -51,14 +51,17 @@ if [ -f /etc/systemd/system/centralina-ip.service ]; then
 fi
 RELOAD_NET=""
 if command -v nmcli >/dev/null && systemctl is-active --quiet NetworkManager; then
-  CON=$(nmcli -t -f NAME,DEVICE con show --active | awk -F: -v d="$IFACE" '$2==d{print $1; exit}')
-  [ -z "$CON" ] && CON=$(nmcli -t -f NAME,TYPE con show | awk -F: '$2=="802-3-ethernet"{print $1; exit}')
+  # profilo "casa": DHCP + 2.0.0.2. Se non arriva l'indirizzo dal router (rete luci), NM passa al profilo "centralina-luci"
+  CON=$(nmcli -t -f NAME,DEVICE con show --active | awk -F: -v d="$IFACE" '$2==d && $1!="centralina-luci"{print $1; exit}')
+  [ -z "$CON" ] && CON=$(nmcli -t -f NAME,TYPE con show | awk -F: '$2=="802-3-ethernet" && $1!="centralina-luci"{print $1; exit}')
   if [ -z "$CON" ]; then nmcli con add type ethernet ifname "$IFACE" con-name centralina >/dev/null; CON="centralina"; fi
-  nmcli con mod "$CON" ipv4.method auto connection.autoconnect yes
+  nmcli con mod "$CON" ipv4.method auto connection.autoconnect yes connection.autoconnect-priority 10 connection.autoconnect-retries 1 ipv4.dhcp-timeout 20
   nmcli con mod "$CON" -ipv4.addresses "$IP_NODO" >/dev/null 2>&1 || true
   nmcli con mod "$CON" +ipv4.addresses "$IP_NODO"
-  echo "   Aggiunto alla connessione \"$CON\" (DHCP di casa + $IP_NODO)"
-  RELOAD_NET="$CON"
+  nmcli con delete centralina-luci >/dev/null 2>&1 || true
+  nmcli con add type ethernet ifname "$IFACE" con-name centralina-luci ipv4.method manual ipv4.addresses "$IP_NODO" ipv6.method ignore connection.autoconnect yes connection.autoconnect-priority 0 >/dev/null
+  echo "   Profilo casa \"$CON\" (DHCP + $IP_NODO) e profilo luci \"centralina-luci\" ($IP_NODO fisso)"
+  RELOAD_NET=""
 else
   # sistemi senza NetworkManager: alias in /etc/network/interfaces.d
   mkdir -p /etc/network/interfaces.d

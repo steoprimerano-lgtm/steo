@@ -130,10 +130,14 @@ function broadcastInfo() { for (const c of clients) wsSend(c, info()); }
 const IP_NODO = process.env.IP_NODO, IFACE = process.env.IFACE;
 if (process.platform === "linux" && IP_NODO && IFACE) {
   const ipOnly = IP_NODO.split("/")[0];
+  let miss = 0;
   const guard = () => exec(`ip -4 addr show dev ${IFACE}`, (err, out) => {
-    if (err || out.includes(" " + ipOnly + "/")) return;
-    console.log("Rete: rimetto", IP_NODO, "su", IFACE);
-    exec(`ip link set ${IFACE} up && ip addr add ${IP_NODO} dev ${IFACE}`, () => {});
+    if (!err && out.includes(" " + ipOnly + "/")) { miss = 0; return; }
+    if (++miss < 2) return;
+    miss = 0;
+    console.log("Rete: manca", IP_NODO, "- attivo il profilo luci");
+    // tramite il gestore di rete (così poi a casa il DHCP riparte da solo); se manca, a mano
+    exec("nmcli con up centralina-luci", e => { if (e) exec(`ip link set ${IFACE} up && ip addr add ${IP_NODO} dev ${IFACE}`, () => {}); });
   });
   setTimeout(() => { guard(); setInterval(guard, 15000); }, 40000);
 }
