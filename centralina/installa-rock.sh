@@ -74,6 +74,8 @@ Description=Centralina luci
 After=network.target
 [Service]
 Environment=PORT=80
+Environment=IP_NODO=$IP_NODO
+Environment=IFACE=$IFACE
 WorkingDirectory=$DEST/centralina
 ExecStart=/usr/local/bin/node $DEST/centralina/server.js
 Restart=always

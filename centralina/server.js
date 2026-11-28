@@ -108,6 +108,19 @@ function wsSend(sock, obj) {
 function info() { return { type: "info", host: os.hostname(), clients: clients.size, canShutdown: process.platform === "linux" }; }
 function broadcastInfo() { for (const c of clients) wsSend(c, info()); }
 
+// guardia della rete: se il router non dà indirizzi automatici, il gestore di rete spegne la scheda
+// e si porta via l'indirizzo per il nodo. Qui lo rimettiamo (solo su Linux, se configurato dall'installazione).
+const IP_NODO = process.env.IP_NODO, IFACE = process.env.IFACE;
+if (process.platform === "linux" && IP_NODO && IFACE) {
+  const ipOnly = IP_NODO.split("/")[0];
+  const guard = () => exec(`ip -4 addr show dev ${IFACE}`, (err, out) => {
+    if (err || out.includes(" " + ipOnly + "/")) return;
+    console.log("Rete: rimetto", IP_NODO, "su", IFACE);
+    exec(`ip link set ${IFACE} up && ip addr add ${IP_NODO} dev ${IFACE}`, () => {});
+  });
+  setTimeout(() => { guard(); setInterval(guard, 15000); }, 40000);
+}
+
 // aggiornamento dall'app: scarica e rilancia lo script di installazione (serve internet)
 const UPDATE_URL = "https://raw.githubusercontent.com/steoprimerano-lgtm/steo/main/centralina/installa-rock.sh";
 let updating = false;
