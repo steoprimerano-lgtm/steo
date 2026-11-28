@@ -679,6 +679,7 @@ async function libGet(man,file){ return LIB.parseQxf(await fetchText(LIB.url(man
 /* ================= COLLEGAMENTO CENTRALINA ================= */
 // Quando l'app è aperta dalla centralina (Raspberry o computer) gli effetti li calcola la centralina,
 // che manda l'Art-Net al nodo. L'app manda le modifiche e riceve quelle fatte da altri dispositivi.
+let updState=null, updArm=false;
 let ws=null, applying=false, syncT=null, central=null, wsGen=0, pingT=null, retryT=null;
 function canCentral(){ const h=location.hostname||""; return /^https?:$/.test(location.protocol) && !!h && !/claude|anthropic|usercontent/.test(h); }
 function connect(){
@@ -695,6 +696,7 @@ function connect(){
       if(m.type==="need") sendNow();
       else if(m.type==="state") applyRemote(m.data);
       else if(m.type==="info"){ central=m; renderCentral(); }
+      else if(m.type==="upd"){ updState=m; renderCentral(); }
     };
   }catch(e){ retryT=setTimeout(connect,1500); }
 }
@@ -732,8 +734,11 @@ function renderCentral(){
   if(NATIVE){ box.innerHTML=`<p class="hint" style="margin:0">App iPad: l'Art-Net parte direttamente da questo iPad verso <b>${escH(net.ip)}</b> (universo ${net.uni}). Qui serve l'indirizzo IP esatto del nodo: 2.255.255.255 non funziona. L'iPad deve essere collegato al Wi-Fi del router a cui è collegato il nodo, e l'app deve restare aperta.</p>`; return; }
   if(!central){ box.innerHTML='<p class="hint" style="margin:0">Anteprima: le luci sono solo simulate. Quando apri l\'app dalla centralina qui vedi lo stato del collegamento.</p>'; return; }
   box.innerHTML=`<p class="hint" style="margin:0 0 8px">Centralina: <b>${central.host}</b> · Art-Net verso <b>${net.ip}</b> (universo ${net.uni}) · ${central.clients} dispositivi collegati</p>`+
-    (central.canShutdown?`<button id="btnShut" class="${shutArm?"on":""}" style="${shutArm?"background:var(--red);border-color:var(--red);color:#fff":""}">${shutArm?"Tocca di nuovo per spegnere":"⏻ Spegni centralina"}</button> <span class="hint">Aspetta 15 secondi, poi spegni l'interruttore.</span>`:"");
+    (central.canShutdown?`<button id="btnShut" class="${shutArm?"on":""}" style="${shutArm?"background:var(--red);border-color:var(--red);color:#fff":""}">${shutArm?"Tocca di nuovo per spegnere":"⏻ Spegni centralina"}</button> <span class="hint">Aspetta 15 secondi, poi spegni l'interruttore.</span>`:"")+
+    (central.canShutdown?`<div style="margin-top:12px"><button id="btnUpd" ${updState&&updState.ok===null?"disabled":""}>${updArm?"Tocca di nuovo per aggiornare":"⟳ Aggiorna centralina"}</button> <span class="hint">Serve internet: prima collega la centralina al router di casa con il cavo.</span>${updState?`<p class="hint" style="margin:6px 0 0;color:${updState.ok===false?"#ff8a8a":"var(--sub)"}">${escH(updState.msg)}</p>`:""}</div>`:"");
   const b=document.getElementById("btnShut");
+  const u=document.getElementById("btnUpd");
+  if(u) u.onclick=()=>{ if(!updArm){ updArm=true; renderCentral(); setTimeout(()=>{ updArm=false; renderCentral(); },4000); } else { updArm=false; updState={ok:null,msg:"Avvio aggiornamento…"}; sendMsg({type:"update"}); renderCentral(); } };
   if(b) b.onclick=()=>{ if(!shutArm){ shutArm=true; renderCentral(); setTimeout(()=>{ shutArm=false; renderCentral(); },4000); } else { sendMsg({type:"shutdown"}); b.textContent="Spegnimento in corso…"; } };
 }
 

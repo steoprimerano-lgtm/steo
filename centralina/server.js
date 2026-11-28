@@ -108,6 +108,24 @@ function wsSend(sock, obj) {
 function info() { return { type: "info", host: os.hostname(), clients: clients.size, canShutdown: process.platform === "linux" }; }
 function broadcastInfo() { for (const c of clients) wsSend(c, info()); }
 
+// aggiornamento dall'app: scarica e rilancia lo script di installazione (serve internet)
+const UPDATE_URL = "https://raw.githubusercontent.com/steoprimerano-lgtm/steo/main/centralina/installa-rock.sh";
+let updating = false;
+function updMsg(ok, msg) { for (const c of clients) wsSend(c, { type: "upd", ok, msg }); }
+function updateSelf() {
+  if (updating) return; updating = true;
+  updMsg(null, "Scarico l'aggiornamento…");
+  exec(`curl -fsSL --max-time 20 ${UPDATE_URL} -o /tmp/installa-rock.sh`, err => {
+    if (err) { updating = false; updMsg(false, "Nessuna connessione a internet: collega la centralina al router di casa e riprova."); return; }
+    updMsg(null, "Installo… la centralina si riavvia da sola, la pagina si ricollega in circa un minuto.");
+    // lanciato fuori dal servizio, così il riavvio della centralina non lo interrompe
+    exec("systemd-run --collect --unit=centralina-aggiorna bash -c 'bash /tmp/installa-rock.sh > /tmp/aggiornamento.log 2>&1'", err2 => {
+      updating = false;
+      if (err2) updMsg(false, "Aggiornamento non riuscito: " + err2.message.split("\n")[0]);
+    });
+  });
+}
+
 function onMessage(sock, txt) {
   let m; try { m = JSON.parse(txt); } catch (e) { return; }
   if (m.type === "state" && m.data && Array.isArray(m.data.fixtures)) {
@@ -116,6 +134,7 @@ function onMessage(sock, txt) {
   } else if (m.type === "mom") engine.mom(m);
   else if (m.type === "tap") engine.tap();
   else if (m.type === "ping") wsSend(sock, { type: "pong" });
+  else if (m.type === "update" && process.platform === "linux") updateSelf();
   else if (m.type === "shutdown" && process.platform === "linux") {
     console.log("Spegnimento richiesto dall'app");
     exec("sudo shutdown -h now", err => { if (err) console.log("Spegnimento non riuscito:", err.message); });
